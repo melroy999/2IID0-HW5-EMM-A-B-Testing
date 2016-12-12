@@ -79,16 +79,22 @@ public class BooleanAttribute extends AbstractAttribute<Boolean> {
     @Override
     public Comparator<Instance> getComparator() {
         return (o1, o2) -> {
-            if(o1 == null) {
+            Boolean bo1 = getValue(o1);
+            Boolean bo2 = getValue(o2);
+
+            if(bo1 == null && bo2 == null) {
+                return 0;
+            }
+
+
+            if(bo1 == null) {
                 return -1;
             }
 
-            if(o2 == null) {
+            if(bo2 == null) {
                 return 1;
             }
 
-            boolean bo1 = getValue(o1);
-            boolean bo2 = getValue(o2);
             return Boolean.compare(bo1, bo2);
         };
     }

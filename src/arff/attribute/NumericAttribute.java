@@ -79,16 +79,22 @@ public class NumericAttribute extends AbstractAttribute<Double> {
     @Override
     public Comparator<Instance> getComparator() {
         return (o1, o2) -> {
-            if(o1 == null) {
+            Double do1 = getValue(o1);
+            Double do2 = getValue(o2);
+
+            if(do1 == null && do2 == null) {
+                return 0;
+            }
+
+
+            if(do1 == null) {
                 return -1;
             }
 
-            if(o2 == null) {
+            if(do2 == null) {
                 return 1;
             }
 
-            double do1 = getValue(o1);
-            double do2 = getValue(o2);
             return Double.compare(do1, do2);
         };
     }

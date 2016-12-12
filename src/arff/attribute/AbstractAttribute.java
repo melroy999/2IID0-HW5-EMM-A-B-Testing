@@ -38,10 +38,13 @@ public abstract class AbstractAttribute<T> {
     private final ArrayList<Integer> sortedIndices = new ArrayList<>();
 
     //The starting point of the indices for the specified value.
-    private final HashMap<T, Integer> valueIndicesStart = new HashMap<>();
+    private final LinkedHashMap<T, Integer> valueIndicesStart = new LinkedHashMap<>();
 
     //The end point of the indices for the specified value.
-    private final HashMap<T, Integer> valueIndicesEnd = new HashMap<>();
+    private final LinkedHashMap<T, Integer> valueIndicesEnd = new LinkedHashMap<>();
+
+    //The highest index with actual values.
+    private int nullStartIndex;
 
     /**
      * Create an attribute.
@@ -71,7 +74,9 @@ public abstract class AbstractAttribute<T> {
 
         //Create a list of integer indices of the sorted instances collection.
         //Also save some useful information regarding value start and value end indices.
-        for(int i = 0; i < instances.size(); i++) {
+        int i;
+        boolean foundNull = false;
+        for(i = 0; i < instances.size(); i++) {
             Instance instance = instances.get(i);
             sortedIndices.add(instance.getId());
 
@@ -83,8 +88,17 @@ public abstract class AbstractAttribute<T> {
                 if(previousValue != null) {
                     valueIndicesEnd.put(previousValue, i - 1);
                 }
+
+                //Set the new previous value.
                 previousValue = value;
-                valueIndicesStart.put(value, i);
+
+                if(value != null) {
+                    valueIndicesStart.put(value, i);
+                } else if(!foundNull) {
+                    //Set the null start index, and break the loop.
+                    nullStartIndex = i;
+                    foundNull = true;
+                }
             }
         }
 
@@ -96,7 +110,7 @@ public abstract class AbstractAttribute<T> {
         //Create the constraints.
         for(T value : values) {
             //For each comparison mode we know this attribute uses.
-            for(Comparison comparison : getComparisons()) {
+            for(Comparison comparison : value != null ? getComparisons() : new Comparison[]{Comparison.EQ}) {
                 Constraint<T> constraint = new Constraint<>(value, comparison);
                 constraints.add(constraint);
 
@@ -129,8 +143,19 @@ public abstract class AbstractAttribute<T> {
         Comparison comparison = constraint.getComparison();
 
         //Get the start and end indices.
-        int indexStart = valueIndicesStart.get(value);
-        int indexEnd = valueIndicesEnd.get(value);
+        int indexStart;
+        int indexEnd;
+
+        //If value is null, we have to be at the end of the list...
+        if(value == null) {
+            //Get the start and end indices.
+            indexStart = nullStartIndex;
+            indexEnd = instances.size() - 1;
+        } else {
+            //Get the start and end indices.
+            indexStart = valueIndicesStart.get(value);
+            indexEnd = valueIndicesEnd.get(value);
+        }
 
         //Create the indices arraylist.
         List<Integer> indices = new ArrayList<>();
@@ -143,8 +168,17 @@ public abstract class AbstractAttribute<T> {
                 break;
             case NEQ:
                 //Check range between 0 and index start - 1, and index end + 1 till the end of the array.
-                indices = sortedIndices.subList(0, indexStart - 1);
-                indices.addAll(sortedIndices.subList(indexEnd + 1, instances.size() - 1));
+                if(indexStart - 1 < 0) {
+                    //if we are violating the range check, create an empty array.
+                    indices = new ArrayList<>();
+                } else {
+                    indices = sortedIndices.subList(0, indexStart - 1);
+                }
+
+                //Make certain that the indexEnd + 1 is within bounds.
+                if(indexEnd + 1 <= instances.size() - 1) {
+                    indices.addAll(sortedIndices.subList(indexEnd + 1, instances.size() - 1));
+                }
                 break;
             case LTEQ:
                 //Check the range from 0 to index end.

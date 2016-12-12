@@ -84,16 +84,21 @@ public class SetAttribute extends AbstractAttribute<String> {
     @Override
     public Comparator<Instance> getComparator() {
         return (o1, o2) -> {
-            if(o1 == null) {
+            String so1 = getValue(o1);
+            String so2 = getValue(o2);
+
+            if(so1 == null && so2 == null) {
+                return 0;
+            }
+
+            if(so1 == null) {
                 return -1;
             }
 
-            if(o2 == null) {
+            if(so2 == null) {
                 return 1;
             }
 
-            String so1 = getValue(o1);
-            String so2 = getValue(o2);
             return so1.compareTo(so2);
         };
     }
