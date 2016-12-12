@@ -91,12 +91,13 @@ public class SetAttribute extends AbstractAttribute<String> {
                 return 0;
             }
 
+            //Make this 1, as we want it at the end of the list.
             if(so1 == null) {
-                return -1;
+                return 1;
             }
 
             if(so2 == null) {
-                return 1;
+                return -1;
             }
 
             return so1.compareTo(so2);

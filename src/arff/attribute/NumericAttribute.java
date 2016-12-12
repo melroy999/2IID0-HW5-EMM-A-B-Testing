@@ -86,13 +86,13 @@ public class NumericAttribute extends AbstractAttribute<Double> {
                 return 0;
             }
 
-
+            //Make this 1, as we want it at the end of the list.
             if(do1 == null) {
-                return -1;
+                return 1;
             }
 
             if(do2 == null) {
-                return 1;
+                return -1;
             }
 
             return Double.compare(do1, do2);

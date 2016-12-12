@@ -86,13 +86,13 @@ public class BooleanAttribute extends AbstractAttribute<Boolean> {
                 return 0;
             }
 
-
+            //Make this 1, as we want it at the end of the list.
             if(bo1 == null) {
-                return -1;
+                return 1;
             }
 
             if(bo2 == null) {
-                return 1;
+                return -1;
             }
 
             return Boolean.compare(bo1, bo2);

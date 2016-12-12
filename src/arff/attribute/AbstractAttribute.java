@@ -44,7 +44,7 @@ public abstract class AbstractAttribute<T> {
     private final LinkedHashMap<T, Integer> valueIndicesEnd = new LinkedHashMap<>();
 
     //The highest index with actual values.
-    private int nullStartIndex;
+    private int nullStartIndex = -1;
 
     /**
      * Create an attribute.
@@ -67,6 +67,7 @@ public abstract class AbstractAttribute<T> {
         List<Instance> instances = new ArrayList<>(arff.getInstances());
 
         //Sort the list of instances based on the provided comparator.
+        //Reverse the order, as we want nulls last instead of first!
         Collections.sort(instances, getComparator());
 
         //Remember the previous value.
@@ -137,6 +138,8 @@ public abstract class AbstractAttribute<T> {
         //Initialize the counters used for the confusion matrix.
         double p = 0;
         double n = 0;
+        double up = 0;
+        double un = 0;
 
         //Get the value and comparison.
         T value = constraint.getValue();
@@ -205,8 +208,22 @@ public abstract class AbstractAttribute<T> {
             }
         }
 
+        //Iterate over null cases, but only if the nullStartIndex is actually set.
+        if(nullStartIndex != -1) {
+            for(int i = nullStartIndex; i < instances.size(); i++) {
+                Instance instance = instances.get(i);
+
+                //If the value is positive increment, decrement otherwise.
+                if(targetAttribute.matchesTargetValue(instance)) {
+                    up++;
+                } else {
+                    un++;
+                }
+            }
+        }
+
         //Create the confusion matrix.
-        return new ConfusionMatrix(p, n, arff.getP(), arff.getN());
+        return new ConfusionMatrix(p, n, up, un, arff.getP(), arff.getN());
     }
 
     /**
