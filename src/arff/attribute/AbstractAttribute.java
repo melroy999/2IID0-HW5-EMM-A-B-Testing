@@ -141,13 +141,57 @@ public abstract class AbstractAttribute<T> {
         double up = 0;
         double un = 0;
 
-        //Get the value and comparison.
-        T value = constraint.getValue();
-        Comparison comparison = constraint.getComparison();
+        //Get a subset of the indices set containing the values that are covered by the comparison and value combination.
+        List<Integer> indices = getIndicesSubsetForValue(instances, constraint);
 
+        //The target attribute.
+        AbstractAttribute targetAttribute = arff.getTargetAttribute();
+
+        //For each instance index.
+        for(int index : indices) {
+            Instance instance = instances.get(index);
+
+            //If the value is positive increment, decrement otherwise.
+            if(targetAttribute.matchesTargetValue(instance)) {
+                p++;
+            } else {
+                n++;
+            }
+        }
+
+        //Iterate over null cases, but only if the nullStartIndex is actually set.
+        if(nullStartIndex != -1) {
+            for(int i = nullStartIndex; i < instances.size(); i++) {
+                Instance instance = instances.get(i);
+
+                //If the value is positive increment, decrement otherwise.
+                if(targetAttribute.matchesTargetValue(instance)) {
+                    up++;
+                } else {
+                    un++;
+                }
+            }
+        }
+
+        //Create the confusion matrix.
+        return new ConfusionMatrix(p, n, up, un, arff.getP(), arff.getN());
+    }
+
+    /**
+     * Get the subset of the indices list that are covered by the constraint.
+     *
+     * @param instances The list of all instances in the dataset.
+     * @param constraint The constraint used.
+     * @return A subset containing the indices of all instances that are covered by the constraint.
+     */
+    public List<Integer> getIndicesSubsetForValue(List<Instance> instances, Constraint<T> constraint) {
         //Get the start and end indices.
         int indexStart;
         int indexEnd;
+
+        //Get the value and comparison.
+        T value = constraint.getValue();
+        Comparison comparison = constraint.getComparison();
 
         //If value is null, we have to be at the end of the list...
         if(value == null) {
@@ -192,38 +236,7 @@ public abstract class AbstractAttribute<T> {
                 indices = sortedIndices.subList(indexStart, instances.size() - 1);
                 break;
         }
-
-        //The target attribute.
-        AbstractAttribute targetAttribute = arff.getTargetAttribute();
-
-        //For each instance index.
-        for(int index : indices) {
-            Instance instance = instances.get(index);
-
-            //If the value is positive increment, decrement otherwise.
-            if(targetAttribute.matchesTargetValue(instance)) {
-                p++;
-            } else {
-                n++;
-            }
-        }
-
-        //Iterate over null cases, but only if the nullStartIndex is actually set.
-        if(nullStartIndex != -1) {
-            for(int i = nullStartIndex; i < instances.size(); i++) {
-                Instance instance = instances.get(i);
-
-                //If the value is positive increment, decrement otherwise.
-                if(targetAttribute.matchesTargetValue(instance)) {
-                    up++;
-                } else {
-                    un++;
-                }
-            }
-        }
-
-        //Create the confusion matrix.
-        return new ConfusionMatrix(p, n, up, un, arff.getP(), arff.getN());
+        return indices;
     }
 
     /**
