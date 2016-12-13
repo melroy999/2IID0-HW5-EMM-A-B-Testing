@@ -8,7 +8,7 @@ import java.util.List;
  */
 public class SieveOfAtkin {
     //A long list of primes.
-    private static final List<Integer> primes = getPrimes(10000000);
+    private static final List<Integer> primes = getPrimes(25000000);
 
     //The current prime number we are at.
     private static int counter = 0;
@@ -29,6 +29,8 @@ public class SieveOfAtkin {
      * @return List of integer primes.
      */
     private static List<Integer> getPrimes(int limit) {
+        System.out.println(Util.getCurrentTimeStamp() + " >>> Creating prime table for all values < " + limit + ".");
+
         //Initialize the sieve.
         boolean[] isPrime = new boolean[limit + 1];
         isPrime[2] = true;
@@ -71,6 +73,8 @@ public class SieveOfAtkin {
                 primes.add(i);
             }
         }
+
+        System.out.println(Util.getCurrentTimeStamp() +  " >>> Prime table creation finished, generated " + primes.size() + " primes.");
 
         return primes;
     }

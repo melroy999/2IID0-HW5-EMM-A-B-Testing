@@ -3,13 +3,14 @@ package arff.attribute;
 import group.Comparison;
 import util.SieveOfAtkin;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Constraint<T> {
     //Values denoting a constraint.
     private final T value;
     private final Comparison comparison;
-    private final int attributeId;
+    private final AbstractAttribute<T> attribute;
 
     //A valuePrime value used for permutation detection.
     private final long valuePrime;
@@ -22,14 +23,14 @@ public class Constraint<T> {
      *
      * @param value The value the constraint will be based upon.
      * @param comparison The comparator used.
-     * @param attributeId The id of the attribute this constraint belongs to.
+     * @param attribute The attribute this constraint belongs to.
      * @param comparisonPrime The prime used for duplicate comparison checking.
      * @param valuePrime The prime used for duplicate value checking.
      */
-    public Constraint(T value, Comparison comparison, int attributeId, long comparisonPrime, long valuePrime) {
+    public Constraint(T value, Comparison comparison, AbstractAttribute<T> attribute, long comparisonPrime, long valuePrime) {
         this.value = value;
         this.comparison = comparison;
-        this.attributeId =attributeId;
+        this.attribute = attribute;
 
         this.valuePrime = valuePrime;
         this.comparisonPrime = comparisonPrime;
@@ -54,22 +55,16 @@ public class Constraint<T> {
     }
 
     /**
-     * Get the id of the attribute that is part of this constraint.
+     * Get the attribute that is part of this constraint.
      *
-     * @return The attribute id.
+     * @return The attribute.
      */
-    public int getAttributeId() {
-        return attributeId;
+    public AbstractAttribute<T> getAttribute() {
+        return attribute;
     }
 
-    /**
-     * Get the attribute from the attribute list that is connected to this constraint.
-     *
-     * @param attributes The list of all attributes.
-     * @return The attribute at the attributeId index.
-     */
-    public AbstractAttribute getAttribute(List<AbstractAttribute> attributes) {
-        return attributes.get(attributeId);
+    public List<Integer> getIndicesSubsetForValue(Constraint<T> constraint) {
+        return attribute.getIndicesSubsetForValue(constraint);
     }
 
     /**

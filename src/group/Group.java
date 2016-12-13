@@ -1,8 +1,8 @@
 package group;
 
 import arff.attribute.Constraint;
-
 import java.util.HashSet;
+import java.util.List;
 
 public class Group {
     //The constraints used within the group.
@@ -86,7 +86,7 @@ public class Group {
      * @param extendedProduct The pre-calculated new product of the extended group.
      * @return True if the group itself will not have the same constraint twice, and the resulting group has not been seen yet.
      */
-    public boolean isValidExtension(Constraint constraint, HashSet<Long> encounteredGroups, long extendedProduct) {
+    private boolean isValidExtension(Constraint constraint, HashSet<Long> encounteredGroups, long extendedProduct) {
         //Return null if the group is invalid.
         // - Duplicate value, as having the same value with different comparators are not helpful.
         // - Duplicate comparator, as having two duplicate comparators will not provide improvements.
@@ -94,5 +94,23 @@ public class Group {
 
         //If the group already contains the given constraint, we will have that product modulo constraint.prime is 0.
         return !(encounteredGroups.contains(extendedProduct) || this.product % constraint.getValuePrime() == 0 || this.product % constraint.getComparisonPrime() == 0);
+    }
+
+    /**
+     * Get the indices of instances that satisfy this group.
+     *
+     * @return Intersection of all subsets.
+     */
+    public List<Integer> getIndicesSubset() {
+        List<Integer> result = null;
+        for(Constraint constraint : constraints) {
+            if(result == null) {
+                result = constraint.getIndicesSubsetForValue(constraint);
+            } else {
+                result.retainAll(constraint.getIndicesSubsetForValue(constraint));
+            }
+        }
+
+        return result;
     }
 }

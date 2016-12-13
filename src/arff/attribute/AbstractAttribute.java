@@ -50,6 +50,9 @@ public abstract class AbstractAttribute<T> {
     //The prime number associated with this attribute.
     private final long prime;
 
+    //The size of the sample.
+    private int size;
+
     /**
      * Create an attribute.
      *
@@ -70,6 +73,9 @@ public abstract class AbstractAttribute<T> {
     public void initialize(ARFF arff) {
         //The list of instances.
         List<Instance> instances = new ArrayList<>(arff.getInstances());
+
+        //The size of the sample.
+        this.size = instances.size();
 
         //Sort the list of instances based on the provided comparator.
         //Reverse the order, as we want nulls last instead of first!
@@ -126,7 +132,7 @@ public abstract class AbstractAttribute<T> {
 
             //For each comparison mode we know this attribute uses.
             for(Comparison comparison : value != null ? getComparisons() : new Comparison[]{Comparison.EQ}) {
-                Constraint<T> constraint = new Constraint<>(value, comparison, id, primeMap.get(comparison), prime);
+                Constraint<T> constraint = new Constraint<>(value, comparison, this, primeMap.get(comparison), prime);
                 constraints.add(constraint);
 
                 //Get the confusion matrix.
@@ -156,7 +162,7 @@ public abstract class AbstractAttribute<T> {
         double un = 0;
 
         //Get a subset of the indices set containing the values that are covered by the comparison and value combination.
-        List<Integer> indices = getIndicesSubsetForValue(instances, constraint);
+        List<Integer> indices = getIndicesSubsetForValue(constraint);
 
         //The target attribute.
         AbstractAttribute targetAttribute = arff.getTargetAttribute();
@@ -194,11 +200,10 @@ public abstract class AbstractAttribute<T> {
     /**
      * Get the subset of the indices list that are covered by the constraint.
      *
-     * @param instances The list of all instances in the dataset.
      * @param constraint The constraint used.
      * @return A subset containing the indices of all instances that are covered by the constraint.
      */
-    public List<Integer> getIndicesSubsetForValue(List<Instance> instances, Constraint<T> constraint) {
+    public List<Integer> getIndicesSubsetForValue(Constraint<T> constraint) {
         //Get the start and end indices.
         int indexStart;
         int indexEnd;
@@ -211,7 +216,7 @@ public abstract class AbstractAttribute<T> {
         if(value == null) {
             //Get the start and end indices.
             indexStart = nullStartIndex;
-            indexEnd = instances.size() - 1;
+            indexEnd = size - 1;
         } else {
             //Get the start and end indices.
             indexStart = valueIndicesStart.get(value);
@@ -237,8 +242,8 @@ public abstract class AbstractAttribute<T> {
                 }
 
                 //Make certain that the indexEnd + 1 is within bounds.
-                if(indexEnd + 1 <= instances.size() - 1) {
-                    indices.addAll(sortedIndices.subList(indexEnd + 1, instances.size() - 1));
+                if(indexEnd + 1 <= size - 1) {
+                    indices.addAll(sortedIndices.subList(indexEnd + 1, size - 1));
                 }
                 break;
             case LTEQ:
@@ -247,7 +252,7 @@ public abstract class AbstractAttribute<T> {
                 break;
             case GTEQ:
                 //Check the range from index start to list size.
-                indices = sortedIndices.subList(indexStart, instances.size() - 1);
+                indices = sortedIndices.subList(indexStart, size - 1);
                 break;
         }
         return indices;
