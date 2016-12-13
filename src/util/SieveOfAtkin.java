@@ -18,8 +18,8 @@ public class SieveOfAtkin {
      *
      * @return The next prime number after the previously taken prime number.
      */
-    public static Integer getNextPrime() {
-        return primes.get(counter++);
+    public static Long getNextPrime() {
+        return Long.valueOf(primes.get(counter++));
     }
 
     /**

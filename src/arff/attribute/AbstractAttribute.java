@@ -4,6 +4,7 @@ import arff.ARFF;
 import arff.instance.Instance;
 import group.Comparison;
 import result.ConfusionMatrix;
+import util.SieveOfAtkin;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -26,7 +27,7 @@ public abstract class AbstractAttribute<T> {
     private T targetValue;
 
     //The list of confusion matrices.
-    private final HashMap<Integer, ConfusionMatrix> constraintToConfusionMatrix = new HashMap<>();
+    private final HashMap<Long, ConfusionMatrix> constraintToConfusionMatrix = new HashMap<>();
 
     //The list of unique values found.
     private final HashSet<T> values = new HashSet<>();
@@ -46,6 +47,9 @@ public abstract class AbstractAttribute<T> {
     //The highest index with actual values.
     private int nullStartIndex = -1;
 
+    //The prime number associated with this attribute.
+    private final long prime;
+
     /**
      * Create an attribute.
      *
@@ -55,6 +59,7 @@ public abstract class AbstractAttribute<T> {
     public AbstractAttribute(String name, int id) {
         this.name = name;
         this.id = id;
+        this.prime = SieveOfAtkin.getNextPrime();
     }
 
     /**
@@ -108,11 +113,20 @@ public abstract class AbstractAttribute<T> {
             valueIndicesEnd.put(previousValue, instances.size() - 1);
         }
 
+        //Get the unique primes for the comparisons.
+        HashMap<Comparison, Long> primeMap = new HashMap<>();
+        for(Comparison comparison : getComparisons()) {
+            primeMap.put(comparison, SieveOfAtkin.getNextPrime());
+        }
+
         //Create the constraints.
         for(T value : values) {
+            //The prime for this specific value.
+            long prime = SieveOfAtkin.getNextPrime();
+
             //For each comparison mode we know this attribute uses.
             for(Comparison comparison : value != null ? getComparisons() : new Comparison[]{Comparison.EQ}) {
-                Constraint<T> constraint = new Constraint<>(value, comparison);
+                Constraint<T> constraint = new Constraint<>(value, comparison, id, primeMap.get(comparison), prime);
                 constraints.add(constraint);
 
                 //Get the confusion matrix.
@@ -304,7 +318,7 @@ public abstract class AbstractAttribute<T> {
      * @return The confusion matrix connected to the value and the comparison.
      */
     public ConfusionMatrix getConfusionMatrix(Constraint<T> constraint) {
-        return constraintToConfusionMatrix.get(constraint.getPrime());
+        return constraintToConfusionMatrix.get(constraint.getValuePrime());
     }
 
     /**
@@ -314,7 +328,7 @@ public abstract class AbstractAttribute<T> {
      * @param confusionMatrix The confusion matrix itself.
      */
     private void addConfusionMatrix(Constraint<T> constraint, ConfusionMatrix confusionMatrix) {
-        constraintToConfusionMatrix.put(constraint.getPrime(), confusionMatrix);
+        constraintToConfusionMatrix.put(constraint.getValuePrime(), confusionMatrix);
     }
 
     /**
@@ -405,4 +419,13 @@ public abstract class AbstractAttribute<T> {
      * @return Whether the instance target value matches the overall target value.
      */
     public abstract boolean matchesTargetValue(Instance instance);
+
+    /**
+     * Get the prime number associated with this attribute.
+     *
+     * @return The prime number associated with this attribute.
+     */
+    public long getPrime() {
+        return prime;
+    }
 }

@@ -22,10 +22,13 @@ public class ConfusionMatrix {
         return "ConfusionMatrix{" +
                 "p=" + p +
                 ", n=" + n +
+                ", p+n=" + (p + n) +
                 ", up=" + up +
                 ", un=" + un +
+                ", up+un=" + (up + un) +
                 ", P=" + P +
                 ", N=" + N +
+                ", P+N=" + (P + N) +
                 '}';
     }
 }

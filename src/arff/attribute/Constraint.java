@@ -1,21 +1,38 @@
 package arff.attribute;
 
-import arff.instance.Instance;
 import group.Comparison;
 import util.SieveOfAtkin;
+
+import java.util.List;
 
 public class Constraint<T> {
     //Values denoting a constraint.
     private final T value;
     private final Comparison comparison;
+    private final int attributeId;
 
-    //A prime value used for permutation detection.
-    private final int prime;
+    //A valuePrime value used for permutation detection.
+    private final long valuePrime;
 
-    public Constraint(T value, Comparison comparison) {
+    //The valuePrime that uniquely defines the comparison connected to the attribute id.
+    private final long comparisonPrime;
+
+    /**
+     * Create a constraint on the attribute.
+     *
+     * @param value The value the constraint will be based upon.
+     * @param comparison The comparator used.
+     * @param attributeId The id of the attribute this constraint belongs to.
+     * @param comparisonPrime The prime used for duplicate comparison checking.
+     * @param valuePrime The prime used for duplicate value checking.
+     */
+    public Constraint(T value, Comparison comparison, int attributeId, long comparisonPrime, long valuePrime) {
         this.value = value;
         this.comparison = comparison;
-        this.prime = SieveOfAtkin.getNextPrime();
+        this.attributeId =attributeId;
+
+        this.valuePrime = valuePrime;
+        this.comparisonPrime = comparisonPrime;
     }
 
     /**
@@ -37,11 +54,39 @@ public class Constraint<T> {
     }
 
     /**
+     * Get the id of the attribute that is part of this constraint.
+     *
+     * @return The attribute id.
+     */
+    public int getAttributeId() {
+        return attributeId;
+    }
+
+    /**
+     * Get the attribute from the attribute list that is connected to this constraint.
+     *
+     * @param attributes The list of all attributes.
+     * @return The attribute at the attributeId index.
+     */
+    public AbstractAttribute getAttribute(List<AbstractAttribute> attributes) {
+        return attributes.get(attributeId);
+    }
+
+    /**
      * Get the prime number associated with this constraint.
      *
-     * @return The prime number.
+     * @return The valuePrime number.
      */
-    public int getPrime() {
-        return prime;
+    public long getValuePrime() {
+        return valuePrime;
+    }
+
+    /**
+     * Get the prime number associated with the comparator in the constraint.
+     *
+     * @return The comparator's valuePrime number.
+     */
+    public long getComparisonPrime() {
+        return comparisonPrime;
     }
 }
