@@ -1,4 +1,4 @@
-package result;
+package search.result;
 
 public class ConfusionMatrix {
     public final double p;
@@ -8,13 +8,13 @@ public class ConfusionMatrix {
     public final double P;
     public final double N;
 
-    public ConfusionMatrix(double p, double n, double up, double un, double p1, double n1) {
+    public ConfusionMatrix(double p, double n, double up, double un, double P, double N) {
         this.p = p;
         this.n = n;
         this.up = up;
         this.un = un;
-        P = p1;
-        N = n1;
+        this.P = P;
+        this.N = N;
     }
 
     @Override

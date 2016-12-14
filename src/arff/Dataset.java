@@ -2,6 +2,7 @@ package arff;
 
 import arff.attribute.AbstractAttribute;
 import arff.instance.Instance;
+import group.Comparison;
 import util.FileLoader;
 
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class Dataset {
         this.relationName = relationName;
 
         this.targetAttribute = attributes.get(targetId);
-        this.targetAttribute.setTargetValue(targetValue);
+        this.targetAttribute.setTargetConstraint(targetValue, Comparison.EQ);
 
         //Intermediary counters.
         int P = 0;

@@ -18,6 +18,9 @@ public class Constraint<T> {
     //The valuePrime that uniquely defines the comparison connected to the attribute id.
     private final long comparisonPrime;
 
+    //The product of this particular constraint.
+    private final long product;
+
     /**
      * Create a constraint on the attribute.
      *
@@ -34,6 +37,7 @@ public class Constraint<T> {
 
         this.valuePrime = valuePrime;
         this.comparisonPrime = comparisonPrime;
+        this.product = valuePrime * comparisonPrime;
     }
 
     /**
@@ -83,6 +87,15 @@ public class Constraint<T> {
      */
     public long getComparisonPrime() {
         return comparisonPrime;
+    }
+
+    /**
+     * Get the product of the two primes.
+     *
+     * @return The product of the value and comparator primes.
+     */
+    public long getProduct() {
+        return product;
     }
 
     @Override

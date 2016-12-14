@@ -3,7 +3,7 @@ package arff.attribute;
 import arff.Dataset;
 import arff.instance.Instance;
 import group.Comparison;
-import result.ConfusionMatrix;
+import search.result.ConfusionMatrix;
 import util.SieveOfAtkin;
 
 import java.util.*;
@@ -23,8 +23,8 @@ public abstract class AbstractAttribute<T> {
     //The id of the attribute.
     private final int id;
 
-    //The target value, if applicable.
-    private T targetValue;
+    //The comparator used to find positive results.
+    private Constraint<T> constraint;
 
     //The list of confusion matrices.
     private final HashMap<Long, ConfusionMatrix> constraintToConfusionMatrix = new HashMap<>();
@@ -216,11 +216,11 @@ public abstract class AbstractAttribute<T> {
         if(value == null) {
             //Get the start and end indices.
             indexStart = nullStartIndex;
-            indexEnd = size - 1;
+            indexEnd = size;
         } else {
             //Get the start and end indices.
             indexStart = valueIndicesStart.get(value);
-            indexEnd = valueIndicesEnd.get(value);
+            indexEnd = valueIndicesEnd.get(value) + 1;
         }
 
         //Create the indices arraylist.
@@ -238,12 +238,13 @@ public abstract class AbstractAttribute<T> {
                     //if we are violating the range check, create an empty array.
                     indices = new ArrayList<>();
                 } else {
-                    indices = sortedIndices.subList(0, indexStart - 1);
+                    indices = new ArrayList<>(sortedIndices.subList(0, indexStart - 1));
                 }
 
                 //Make certain that the indexEnd + 1 is within bounds.
-                if(indexEnd + 1 <= size - 1) {
-                    indices.addAll(sortedIndices.subList(indexEnd + 1, size - 1));
+                if(indexEnd <= size - 1) {
+                    //Keep in mind that subList outer limit is non-inclusive!
+                    indices.addAll(sortedIndices.subList(indexEnd, size));
                 }
                 break;
             case LTEQ:
@@ -252,7 +253,7 @@ public abstract class AbstractAttribute<T> {
                 break;
             case GTEQ:
                 //Check the range from index start to list size.
-                indices = sortedIndices.subList(indexStart, size - 1);
+                indices = sortedIndices.subList(indexStart, size);
                 break;
         }
         return indices;
@@ -323,7 +324,7 @@ public abstract class AbstractAttribute<T> {
      * @return The confusion matrix connected to the value and the comparison.
      */
     public ConfusionMatrix getConfusionMatrix(Constraint<T> constraint) {
-        return constraintToConfusionMatrix.get(constraint.getValuePrime());
+        return constraintToConfusionMatrix.get(constraint.getProduct());
     }
 
     /**
@@ -333,7 +334,7 @@ public abstract class AbstractAttribute<T> {
      * @param confusionMatrix The confusion matrix itself.
      */
     private void addConfusionMatrix(Constraint<T> constraint, ConfusionMatrix confusionMatrix) {
-        constraintToConfusionMatrix.put(constraint.getValuePrime(), confusionMatrix);
+        constraintToConfusionMatrix.put(constraint.getProduct(), confusionMatrix);
     }
 
     /**
@@ -405,16 +406,7 @@ public abstract class AbstractAttribute<T> {
      * @return The target value.
      */
     public T getTargetValue() {
-        return targetValue;
-    }
-
-    /**
-     * Set the target value.
-     *
-     * @param targetValue The new target value.
-     */
-    public void setTargetValue(String targetValue) {
-        this.targetValue = convertValue(targetValue);
+        return constraint.getValue();
     }
 
     /**
@@ -424,6 +416,29 @@ public abstract class AbstractAttribute<T> {
      * @return Whether the instance target value matches the overall target value.
      */
     public abstract boolean matchesTargetValue(Instance instance);
+
+    /**
+     * Set the target constraint.
+     *
+     * @param value The value of the constraint.
+     * @param comparison The comparison of the constraint.
+     */
+    public void setTargetConstraint(String value, Comparison comparison) {
+        for(Constraint<T> constraint : getConstraints()) {
+            if(constraint.getValue().equals(convertValue(value)) && constraint.getComparison() == comparison) {
+                this.constraint = constraint;
+            }
+        }
+        throw new IllegalArgumentException("No constraint exists for the value and comparison combination.");
+    }
+
+    /**
+     * Get the target constraint.
+     * @return The target constraint.
+     */
+    public Constraint<T> getTargetConstraint() {
+        return constraint;
+    }
 
     /**
      * Get the prime number associated with this attribute.
