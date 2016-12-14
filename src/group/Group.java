@@ -19,6 +19,9 @@ public class Group implements Comparable<Group> {
     //The evaluation value of this group.
     private double evaluation;
 
+    //The confusion matrix.
+    private ConfusionMatrix confusionMatrix;
+
     /**
      * Create an empty group.
      */
@@ -196,13 +199,33 @@ public class Group implements Comparable<Group> {
         Constraint newConstraint = constraints.peekLast();
 
         //Get the intersection of all the indices lists.
-        List<Integer> indices = new ArrayList<>(newConstraint.getIndicesSubsetForValue());
+        List<Integer> indices;
+
+        //Make sure that the passed list of indices is not null.
+        if(seedIndices != null) {
+            indices = new ArrayList<>(seedIndices);
+
+            //Do the intersection.
+            indices.retainAll(newConstraint.getIndicesSubsetForValue());
+        } else {
+            indices = new ArrayList<>(newConstraint.getIndicesSubsetForValue());
+        }
 
         //The coverage is the size of the list.
         int coverage = indices.size();
 
-        //Get the union of all the null indices lists.
-        Set<Integer> nullList = new HashSet<>(newConstraint.getNullIndices());
+        //Get the intersection of all the indices lists.
+        Set<Integer> nullList;
+
+        //Make sure that the passed list of indices is not null.
+        if(seedIndices != null) {
+            nullList = new HashSet<>(seedNullInstances);
+
+            //Do the intersection.
+            nullList.addAll(newConstraint.getNullIndices());
+        } else {
+            nullList = new HashSet<>(newConstraint.getNullIndices());
+        }
 
         //Get the amount of null cases.
         int nullCases = nullList.size();
@@ -232,7 +255,7 @@ public class Group implements Comparable<Group> {
      */
     public double evaluateQuality(AbstractQualityMeasure qualityMeasure, Dataset dataset, List<Integer> seedIndices, Set<Integer> seedNullInstances, List<Integer> positives) {
         //We will first need the confusion matrix.
-        ConfusionMatrix confusionMatrix = getConfusionMatrix(dataset, seedIndices, seedNullInstances, positives);
+        this.confusionMatrix = getConfusionMatrix(dataset, seedIndices, seedNullInstances, positives);
 
         //Get the evaluation value.
         this.evaluation = qualityMeasure.evaluate(confusionMatrix.p, confusionMatrix.n, confusionMatrix.P, confusionMatrix.N);
@@ -290,5 +313,9 @@ public class Group implements Comparable<Group> {
                 ", product=" + product +
                 ", evaluation=" + evaluation +
                 '}';
+    }
+
+    public ConfusionMatrix getConfusionMatrix() {
+        return confusionMatrix;
     }
 }

@@ -272,7 +272,7 @@ public abstract class AbstractAttribute<T> {
                 break;
             case GTEQ:
                 //Check the range from index start to list size.
-                indices = sortedIndices.subList(indexStart, size);
+                indices = sortedIndices.subList(indexStart, nullStartIndex == -1 ? size : nullStartIndex);
                 break;
         }
         return indices;

@@ -55,6 +55,7 @@ public class Main {
             GroupPriorityQueue queue = new BeamSearch().search(dataset, new WeightedRelativeAccuracyQualityMeasure(), new SimpleRefinementOperator(), 10, 2, 100, blacklist);
             for(Group group : queue) {
                 System.out.println(group);
+                System.out.println(group.getConfusionMatrix());
             }
         } catch (Exception e) {
             e.printStackTrace();

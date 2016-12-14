@@ -57,6 +57,7 @@ public class BeamSearch {
                 Set<Integer> seedNullIndices = seed.getNullIndicesSubset();
 
                 System.out.println(Util.getCurrentTimeStamp() + " Evaluating seed " + seed);
+                System.out.println("ConfusionTable: " + seed.getConfusionMatrix());
 
                 //Get the candidate subgroups from the seed.
                 Set<Group> groups = refinementOperator.generate(seed, dataset, encounteredGroups, blacklist);
