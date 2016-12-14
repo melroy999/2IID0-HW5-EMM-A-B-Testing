@@ -1,5 +1,6 @@
 package arff.attribute;
 
+import arff.instance.Instance;
 import group.Comparison;
 import util.SieveOfAtkin;
 
@@ -106,5 +107,9 @@ public class Constraint<T> {
      */
     public Long getProduct() {
         return product;
+    }
+
+    public boolean contains(Instance instance) {
+        return attribute.contains(this, instance);
     }
 }

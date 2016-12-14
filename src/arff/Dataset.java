@@ -7,7 +7,6 @@ import group.Comparison;
 import util.FileLoader;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 public class Dataset {
@@ -36,7 +35,14 @@ public class Dataset {
         this.relationName = relationName;
 
         this.targetAttribute = attributes.get(targetId);
-        this.targetAttribute.setTargetValue(targetValue);
+
+        //Initialize all the attributes.
+        for(AbstractAttribute attribute : attributes) {
+            attribute.initialize(this);
+        }
+
+        //Set the target constraint.
+        this.targetConstraint = targetAttribute.getConstraint(targetAttribute.getName() + " " + comparison + " " + targetValue);
 
         //Intermediary counters.
         int P = 0;
@@ -44,7 +50,7 @@ public class Dataset {
 
         //Count the amount of positive and negative cases.
         for(Instance instance : instances) {
-            if(targetAttribute.matchesTargetValue(instance)) {
+            if(targetAttribute.matchesTargetValue(instance, this)) {
                 P++;
             } else {
                 N++;
@@ -57,11 +63,8 @@ public class Dataset {
 
         //Initialize all the attributes.
         for(AbstractAttribute attribute : attributes) {
-            attribute.initialize(this);
+            attribute.initializeConfusionMatrices(this);
         }
-
-        //Set the target constraint.
-        this.targetConstraint = targetAttribute.getConstraint(targetAttribute.getName() + " " + comparison + " " + targetValue);
     }
 
     /**

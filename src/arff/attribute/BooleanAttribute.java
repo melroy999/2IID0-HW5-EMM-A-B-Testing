@@ -1,5 +1,6 @@
 package arff.attribute;
 
+import arff.Dataset;
 import arff.instance.Instance;
 import group.Comparison;
 
@@ -99,14 +100,14 @@ public class BooleanAttribute extends AbstractAttribute<Boolean> {
         };
     }
 
-    /**
-     * Whether the instance matches the target value.
-     *
-     * @param instance The instance that has to be checked.
-     * @return Whether the instance target value matches the overall target value.
-     */
     @Override
-    public boolean matchesTargetValue(Instance instance) {
-        return getValue(instance) == getTargetValue();
+    public boolean contains(Constraint<Boolean> constraint, Instance instance) {
+        switch (constraint.getComparison()) {
+            case EQ:
+                return instance.getValue(this) == constraint.getValue();
+            case NEQ:
+                return instance.getValue(this) != constraint.getValue();
+        }
+        return false;
     }
 }

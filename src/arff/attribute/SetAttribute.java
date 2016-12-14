@@ -104,14 +104,16 @@ public class SetAttribute extends AbstractAttribute<String> {
         };
     }
 
-    /**
-     * Whether the instance matches the target value.
-     *
-     * @param instance The instance that has to be checked.
-     * @return Whether the instance target value matches the overall target value.
-     */
     @Override
-    public boolean matchesTargetValue(Instance instance) {
-        return getTargetValue().equals(instance.getTargetValue());
+    public boolean contains(Constraint<String> constraint, Instance instance) {
+        switch (constraint.getComparison()) {
+            case EQ:
+                return instance.getValue(this).equals(constraint.getValue());
+            case NEQ:
+                return !instance.getValue(this).equals(constraint.getValue());
+        }
+        return false;
     }
+
+
 }

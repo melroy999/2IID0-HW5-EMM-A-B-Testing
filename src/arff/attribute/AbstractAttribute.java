@@ -6,6 +6,7 @@ import group.Comparison;
 import search.result.ConfusionMatrix;
 import util.SieveOfAtkin;
 
+import javax.xml.crypto.Data;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,9 +23,6 @@ public abstract class AbstractAttribute<T> {
 
     //The id of the attribute.
     private final int id;
-
-    //The target value, if applicable.
-    private T targetValue;
 
     //The list of confusion matrices.
     private final HashMap<Long, ConfusionMatrix> constraintToConfusionMatrix = new HashMap<>();
@@ -138,13 +136,23 @@ public abstract class AbstractAttribute<T> {
                 Constraint<T> constraint = new Constraint<>(value, comparison, this, primeMap.get(comparison), prime);
                 constraints.add(constraint);
                 stringToConstraint.put(constraint.toString(), constraint);
-
-                //Get the confusion matrix.
-                ConfusionMatrix confusionMatrix = calculateConfusionMatrix(constraint, dataset);
-
-                //Add the confusion matrix.
-                addConfusionMatrix(constraint, confusionMatrix);
             }
+        }
+    }
+
+    /**
+     * Initializes the attribute information sources.
+     *
+     * @param dataset The dataset file.
+     */
+    public void initializeConfusionMatrices(Dataset dataset) {
+        //Create the constraints.
+        for(Constraint<T> constraint : constraints) {
+            //Get the confusion matrix.
+            ConfusionMatrix confusionMatrix = calculateConfusionMatrix(constraint, dataset);
+
+            //Add the confusion matrix.
+            addConfusionMatrix(constraint, confusionMatrix);
         }
     }
 
@@ -176,7 +184,7 @@ public abstract class AbstractAttribute<T> {
             Instance instance = instances.get(index);
 
             //If the value is positive increment, decrement otherwise.
-            if(targetAttribute.matchesTargetValue(instance)) {
+            if(targetAttribute.matchesTargetValue(instance, dataset)) {
                 p++;
             } else {
                 n++;
@@ -189,7 +197,7 @@ public abstract class AbstractAttribute<T> {
                 Instance instance = instances.get(i);
 
                 //If the value is positive increment, decrement otherwise.
-                if(targetAttribute.matchesTargetValue(instance)) {
+                if(targetAttribute.matchesTargetValue(instance, dataset)) {
                     up++;
                 } else {
                     un++;
@@ -430,30 +438,14 @@ public abstract class AbstractAttribute<T> {
     public abstract Comparator<Instance> getComparator();
 
     /**
-     * Get the target value.
-     *
-     * @return The target value.
-     */
-    public T getTargetValue() {
-        return targetValue;
-    }
-
-    /**
-     * Set the target value.
-     *
-     * @param targetValue The new target value.
-     */
-    public void setTargetValue(String targetValue) {
-        this.targetValue = convertValue(targetValue);
-    }
-
-    /**
      * Whether the instance matches the target value.
      *
      * @param instance The instance that has to be checked.
      * @return Whether the instance target value matches the overall target value.
      */
-    public abstract boolean matchesTargetValue(Instance instance);
+    public boolean matchesTargetValue(Instance instance, Dataset dataset) {
+        return dataset.getTargetConstraint().contains(instance);
+    }
 
     /**
      * Get the prime number associated with this attribute.
@@ -463,4 +455,6 @@ public abstract class AbstractAttribute<T> {
     public long getPrime() {
         return prime;
     }
+
+    public abstract boolean contains(Constraint<T> constraint, Instance instance);
 }
