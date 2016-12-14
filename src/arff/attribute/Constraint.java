@@ -68,8 +68,12 @@ public class Constraint<T> {
         return attribute;
     }
 
-    public List<Integer> getIndicesSubsetForValue(Constraint<T> constraint) {
-        return attribute.getIndicesSubsetForValue(constraint);
+    public List<Integer> getIndicesSubsetForValue() {
+        return attribute.getIndicesSubsetForValue(this);
+    }
+
+    public List<Integer> getNullIndices() {
+        return attribute.getNullIndices();
     }
 
     /**

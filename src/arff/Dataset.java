@@ -1,10 +1,13 @@
 package arff;
 
 import arff.attribute.AbstractAttribute;
+import arff.attribute.Constraint;
 import arff.instance.Instance;
+import group.Comparison;
 import util.FileLoader;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class Dataset {
@@ -21,10 +24,13 @@ public class Dataset {
     private final int P;
     private final int N;
 
+    //Get the target constraint.
+    private final Constraint targetConstraint;
+
     //The target attribute.
     private final AbstractAttribute targetAttribute;
 
-    public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int targetId, String targetValue) {
+    public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int targetId, String targetValue, Comparison comparison) {
         this.instances = instances;
         this.attributes = attributes;
         this.relationName = relationName;
@@ -53,6 +59,9 @@ public class Dataset {
         for(AbstractAttribute attribute : attributes) {
             attribute.initialize(this);
         }
+
+        //Set the target constraint.
+        this.targetConstraint = targetAttribute.getConstraint(targetAttribute.getName() + " " + comparison + " " + targetValue);
     }
 
     /**
@@ -139,6 +148,15 @@ public class Dataset {
             }
         }
 
-        return new Dataset(attributes, instances, relation, attributes.size() - 1, "1");
+        return new Dataset(attributes, instances, relation, attributes.size() - 1, "1", Comparison.EQ);
+    }
+
+    /**
+     * Get the target constraint.
+     *
+     * @return The target constraint.
+     */
+    public Constraint getTargetConstraint() {
+        return targetConstraint;
     }
 }

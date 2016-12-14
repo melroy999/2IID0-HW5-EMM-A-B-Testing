@@ -16,7 +16,7 @@ public class GroupPriorityQueue extends TreeSet<Group> {
     public boolean add(Group group) {
         boolean returnValue = super.add(group);
         //Check if we are exceeding the maximum capacity.
-        if(this.size() == maximumCapacity) {
+        if(this.size() > maximumCapacity) {
             //Remove the worst performing group.
             this.pollLast();
 

@@ -47,7 +47,7 @@ public class BooleanAttribute extends AbstractAttribute<Boolean> {
      */
     @Override
     public Comparison[] getComparisons() {
-        return new Comparison[]{Comparison.EQ, Comparison.NEQ};
+        return new Comparison[]{Comparison.EQ/*, Comparison.NEQ*/};
     }
 
     /**

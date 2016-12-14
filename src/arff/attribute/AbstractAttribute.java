@@ -124,7 +124,7 @@ public abstract class AbstractAttribute<T> {
 
         //Get the unique primes for the comparisons.
         HashMap<Comparison, Long> primeMap = new HashMap<>();
-        for(Comparison comparison : getComparisons()) {
+        for(Comparison comparison : new Comparison[]{Comparison.EQ, Comparison.NEQ, Comparison.GTEQ, Comparison.LTEQ}) {
             primeMap.put(comparison, SieveOfAtkin.getNextPrime());
         }
 

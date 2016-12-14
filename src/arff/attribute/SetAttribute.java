@@ -52,7 +52,7 @@ public class SetAttribute extends AbstractAttribute<String> {
      */
     @Override
     public Comparison[] getComparisons() {
-        return new Comparison[]{Comparison.EQ, Comparison.NEQ};
+        return new Comparison[]{Comparison.EQ/*, Comparison.NEQ*/};
     }
 
     /**

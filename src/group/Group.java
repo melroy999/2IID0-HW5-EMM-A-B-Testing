@@ -1,15 +1,17 @@
 package group;
 
 import arff.Dataset;
+import arff.attribute.AbstractAttribute;
 import arff.attribute.Constraint;
+import arff.instance.Instance;
 import search.quality.AbstractQualityMeasure;
+import search.result.ConfusionMatrix;
 
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
-public class Group {
+public class Group implements Comparable<Group> {
     //The constraints used within the group.
-    private final HashSet<Constraint> constraints;
+    private final LinkedList<Constraint> constraints;
 
     //The product of all primes within the group.
     private final long product;
@@ -21,7 +23,7 @@ public class Group {
      * Create an empty group.
      */
     public Group() {
-        this.constraints = new HashSet<>();
+        this.constraints = new LinkedList<>();
 
         //Calculate the product of the constraints' primes.
         this.product = 1;
@@ -35,7 +37,7 @@ public class Group {
      * @param extendedProduct The pre-calculated new product of the group.
      */
     private Group(Constraint constraint, Group group, long extendedProduct) {
-        this.constraints = new HashSet<>(group.getConstraints());
+        this.constraints = new LinkedList<>(group.getConstraints());
         this.constraints.add(constraint);
 
         //Calculate the product of the constraints' primes.
@@ -47,7 +49,7 @@ public class Group {
      *
      * @return The set of constraints that define the group.
      */
-    public HashSet<Constraint> getConstraints() {
+    public LinkedList<Constraint> getConstraints() {
         return constraints;
     }
 
@@ -73,6 +75,9 @@ public class Group {
 
         //Check whether the extension would be valid or not.
         if(isValidExtension(constraint, encounteredGroups, extendedProduct)) {
+            //Add the new product to the encountered groups list.
+            encounteredGroups.add(extendedProduct);
+
             //If it is valid, we want to make the group.
             return new Group(constraint, this, extendedProduct);
         }
@@ -105,13 +110,64 @@ public class Group {
      * @return Intersection of all subsets.
      */
     public List<Integer> getIndicesSubset() {
-        List<Integer> result = null;
+        List<List<Integer>> lists = new ArrayList<>();
+
+        //Get all the indice subset lists.
         for(Constraint constraint : constraints) {
-            if(result == null) {
-                result = constraint.getIndicesSubsetForValue(constraint);
-            } else {
-                result.retainAll(constraint.getIndicesSubsetForValue(constraint));
+            lists.add(constraint.getIndicesSubsetForValue());
+        }
+
+        //Sort the list on their size.
+        Collections.sort(lists, new Comparator<List<Integer>>() {
+            @Override
+            public int compare(List<Integer> o1, List<Integer> o2) {
+                return Integer.compare(o1.size(), o2.size());
             }
+        });
+
+        //Make sure we have data...
+        if(lists.isEmpty()) {
+            return null;
+        }
+
+        //Start the retain all chain.
+        List<Integer> result = new ArrayList<>(lists.get(0));
+        for(int i = 1; i < lists.size(); i++) {
+            result.retainAll(lists.get(i));
+        }
+
+        return result;
+    }
+
+    /**
+     * Get the null indices subset.
+     *
+     * @return The union of all null indices subsets.
+     */
+    public Set<Integer> getNullIndicesSubset() {
+        List<List<Integer>> lists = new ArrayList<>();
+
+        //Get all the indice subset lists.
+        for(Constraint constraint : constraints) {
+            lists.add(constraint.getNullIndices());
+        }
+
+        //Sort the list on their size.
+        Collections.sort(lists, new Comparator<List<Integer>>() {
+            @Override
+            public int compare(List<Integer> o1, List<Integer> o2) {
+                return Integer.compare(o1.size(), o2.size());
+            }
+        });
+
+        //Make sure we have data...
+        if(lists.isEmpty()) {
+            return null;
+        }
+
+        Set<Integer> result = new HashSet<>(lists.get(0));
+        for(int i = 1; i < lists.size(); i++) {
+            result.addAll(lists.get(i));
         }
 
         return result;
@@ -135,14 +191,104 @@ public class Group {
         this.evaluation = evaluation;
     }
 
+    public ConfusionMatrix getConfusionMatrix(Dataset dataset, List<Integer> seedIndices, Set<Integer> seedNullInstances, List<Integer> positives) {
+        //Last addition:
+        Constraint newConstraint = constraints.peekLast();
+
+        //Get the intersection of all the indices lists.
+        List<Integer> indices = new ArrayList<>(newConstraint.getIndicesSubsetForValue());
+
+        //The coverage is the size of the list.
+        int coverage = indices.size();
+
+        //Get the union of all the null indices lists.
+        Set<Integer> nullList = new HashSet<>(newConstraint.getNullIndices());
+
+        //Get the amount of null cases.
+        int nullCases = nullList.size();
+
+        //Only keep the positive values.
+        indices.retainAll(positives);
+
+        //The amount of positive instances is the size of the list that has only positives retained.
+        int p = indices.size();
+
+        //Only keep the positive values.
+        nullList.retainAll(positives);
+
+        //The amount of positive instances is the size of the list that has only positives retained.
+        int up = nullList.size();
+
+        return new ConfusionMatrix(p, coverage - p, up, nullCases - up, dataset.getP(), dataset.getN());
+    }
+
     /**
      * Evaluate the quality of this group.
      *
      * @param qualityMeasure The quality measure to use.
      * @param dataset The dataset to take the data from.
+     * @param positives
      * @return The evaluation value according to the quality measure.
      */
-    public double evaluateQuality(AbstractQualityMeasure qualityMeasure, Dataset dataset) {
-        return 0;
+    public double evaluateQuality(AbstractQualityMeasure qualityMeasure, Dataset dataset, List<Integer> seedIndices, Set<Integer> seedNullInstances, List<Integer> positives) {
+        //We will first need the confusion matrix.
+        ConfusionMatrix confusionMatrix = getConfusionMatrix(dataset, seedIndices, seedNullInstances, positives);
+
+        //Get the evaluation value.
+        this.evaluation = qualityMeasure.evaluate(confusionMatrix.p, confusionMatrix.n, confusionMatrix.P, confusionMatrix.N);
+        return this.evaluation;
+    }
+
+    /**
+     * Compares this object with the specified object for order.  Returns a
+     * negative integer, zero, or a positive integer as this object is less
+     * than, equal to, or greater than the specified object.
+     * <p>
+     * <p>The implementor must ensure <tt>sgn(x.compareTo(y)) ==
+     * -sgn(y.compareTo(x))</tt> for all <tt>x</tt> and <tt>y</tt>.  (This
+     * implies that <tt>x.compareTo(y)</tt> must throw an exception iff
+     * <tt>y.compareTo(x)</tt> throws an exception.)
+     * <p>
+     * <p>The implementor must also ensure that the relation is transitive:
+     * <tt>(x.compareTo(y)&gt;0 &amp;&amp; y.compareTo(z)&gt;0)</tt> implies
+     * <tt>x.compareTo(z)&gt;0</tt>.
+     * <p>
+     * <p>Finally, the implementor must ensure that <tt>x.compareTo(y)==0</tt>
+     * implies that <tt>sgn(x.compareTo(z)) == sgn(y.compareTo(z))</tt>, for
+     * all <tt>z</tt>.
+     * <p>
+     * <p>It is strongly recommended, but <i>not</i> strictly required that
+     * <tt>(x.compareTo(y)==0) == (x.equals(y))</tt>.  Generally speaking, any
+     * class that implements the <tt>Comparable</tt> interface and violates
+     * this condition should clearly indicate this fact.  The recommended
+     * language is "Note: this class has a natural ordering that is
+     * inconsistent with equals."
+     * <p>
+     * <p>In the foregoing description, the notation
+     * <tt>sgn(</tt><i>expression</i><tt>)</tt> designates the mathematical
+     * <i>signum</i> function, which is defined to return one of <tt>-1</tt>,
+     * <tt>0</tt>, or <tt>1</tt> according to whether the value of
+     * <i>expression</i> is negative, zero or positive.
+     *
+     * @param o the object to be compared.
+     * @return a negative integer, zero, or a positive integer as this object
+     * is less than, equal to, or greater than the specified object.
+     * @throws NullPointerException if the specified object is null
+     * @throws ClassCastException   if the specified object's type prevents it
+     *                              from being compared to this object.
+     */
+    @Override
+    public int compareTo(Group o) {
+        //Take the inverse, as we want higher values at the top.
+        return -Double.compare(this.getEvaluation(), o.getEvaluation());
+    }
+
+    @Override
+    public String toString() {
+        return "Group{" +
+                "constraints=" + constraints +
+                ", product=" + product +
+                ", evaluation=" + evaluation +
+                '}';
     }
 }
