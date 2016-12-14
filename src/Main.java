@@ -1,10 +1,13 @@
-import arff.ARFF;
+import arff.Dataset;
+import arff.attribute.AbstractAttribute;
+
+import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) {
         try {
-            ARFF arff = ARFF.loadARFF("/dataset.arff");
-            System.out.println("P=" + arff.getP() + ", N=" + arff.getN() + ", P+N=" + (arff.getP() + arff.getN()) + ", Number of instances: " + arff.getInstances().size());
+            Dataset dataset = Dataset.loadARFF("/dataset.arff");
+            System.out.println("P=" + dataset.getP() + ", N=" + dataset.getN() + ", P+N=" + (dataset.getP() + dataset.getN()) + ", Number of instances: " + dataset.getInstances().size());
         } catch (Exception e) {
             e.printStackTrace();
         }

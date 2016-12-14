@@ -1,6 +1,6 @@
 package arff.attribute;
 
-import arff.ARFF;
+import arff.Dataset;
 import arff.instance.Instance;
 import group.Comparison;
 import result.ConfusionMatrix;
@@ -33,7 +33,7 @@ public abstract class AbstractAttribute<T> {
     private final HashSet<T> values = new HashSet<>();
 
     //The list of constraints.
-    private final HashSet<Constraint<T>> constraints = new HashSet<>();
+    private final ArrayList<Constraint<T>> constraints = new ArrayList<>();
 
     //Sorted indices of the instances.
     private final ArrayList<Integer> sortedIndices = new ArrayList<>();
@@ -68,11 +68,11 @@ public abstract class AbstractAttribute<T> {
     /**
      * Initializes the attribute information sources.
      *
-     * @param arff The arff file.
+     * @param dataset The dataset file.
      */
-    public void initialize(ARFF arff) {
+    public void initialize(Dataset dataset) {
         //The list of instances.
-        List<Instance> instances = new ArrayList<>(arff.getInstances());
+        List<Instance> instances = new ArrayList<>(dataset.getInstances());
 
         //The size of the sample.
         this.size = instances.size();
@@ -136,7 +136,7 @@ public abstract class AbstractAttribute<T> {
                 constraints.add(constraint);
 
                 //Get the confusion matrix.
-                ConfusionMatrix confusionMatrix = calculateConfusionMatrix(constraint, arff);
+                ConfusionMatrix confusionMatrix = calculateConfusionMatrix(constraint, dataset);
 
                 //Add the confusion matrix.
                 addConfusionMatrix(constraint, confusionMatrix);
@@ -148,12 +148,12 @@ public abstract class AbstractAttribute<T> {
      * Calculate the confusion matrix.
      *
      * @param constraint The constraint that is used.
-     * @param arff The arff file.
+     * @param dataset The dataset file.
      * @return The confusion matrix of the constraint on this attribute.
      */
-    private ConfusionMatrix calculateConfusionMatrix(Constraint<T> constraint, ARFF arff) {
+    private ConfusionMatrix calculateConfusionMatrix(Constraint<T> constraint, Dataset dataset) {
         //The list of instances.
-        List<Instance> instances = arff.getInstances();
+        List<Instance> instances = dataset.getInstances();
 
         //Initialize the counters used for the confusion matrix.
         double p = 0;
@@ -165,7 +165,7 @@ public abstract class AbstractAttribute<T> {
         List<Integer> indices = getIndicesSubsetForValue(constraint);
 
         //The target attribute.
-        AbstractAttribute targetAttribute = arff.getTargetAttribute();
+        AbstractAttribute targetAttribute = dataset.getTargetAttribute();
 
         //For each instance index.
         for(int index : indices) {
@@ -194,7 +194,7 @@ public abstract class AbstractAttribute<T> {
         }
 
         //Create the confusion matrix.
-        return new ConfusionMatrix(p, n, up, un, arff.getP(), arff.getN());
+        return new ConfusionMatrix(p, n, up, un, dataset.getP(), dataset.getN());
     }
 
     /**
@@ -305,7 +305,7 @@ public abstract class AbstractAttribute<T> {
      *
      * @return The list of constraints that this attribute can produce.
      */
-    public HashSet<Constraint<T>> getConstraints() {
+    public ArrayList<Constraint<T>> getConstraints() {
         return constraints;
     }
 

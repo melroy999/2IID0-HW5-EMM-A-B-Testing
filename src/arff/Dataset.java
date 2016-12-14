@@ -7,11 +7,11 @@ import util.FileLoader;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ARFF {
-    //The list of attributes within the ARFF file.
+public class Dataset {
+    //The list of attributes within the dataset file.
     private final List<AbstractAttribute> attributes;
 
-    //The list of instances within the ARFF file.
+    //The list of instances within the dataset file.
     private final List<Instance> instances;
 
     //The relation name.
@@ -24,7 +24,7 @@ public class ARFF {
     //The target attribute.
     private final AbstractAttribute targetAttribute;
 
-    public ARFF(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int targetId, String targetValue) {
+    public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int targetId, String targetValue) {
         this.instances = instances;
         this.attributes = attributes;
         this.relationName = relationName;
@@ -74,7 +74,7 @@ public class ARFF {
     }
 
     /**
-     * Get the amount of positive instances in the ARFF file, for the target.
+     * Get the amount of positive instances in the Dataset file, for the target.
      *
      * @return The amount of positive instances.
      */
@@ -83,7 +83,7 @@ public class ARFF {
     }
 
     /**
-     * Get the amount of negative instances in the ARFF file, for the target.
+     * Get the amount of negative instances in the Dataset file, for the target.
      *
      * @return The amount of negative instances.
      */
@@ -119,7 +119,7 @@ public class ARFF {
      * @return The arff file as an object.
      * @throws Exception Throws an exception if the file cannot be loaded.
      */
-    public static ARFF loadARFF(String filePath) throws Exception {
+    public static Dataset loadARFF(String filePath) throws Exception {
         lines.clear();
         lines.addAll(FileLoader.readAllLines(filePath));
 
@@ -139,6 +139,6 @@ public class ARFF {
             }
         }
 
-        return new ARFF(attributes, instances, relation, attributes.size() - 1, "1");
+        return new Dataset(attributes, instances, relation, attributes.size() - 1, "1");
     }
 }

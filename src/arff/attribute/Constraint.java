@@ -84,4 +84,9 @@ public class Constraint<T> {
     public long getComparisonPrime() {
         return comparisonPrime;
     }
+
+    @Override
+    public String toString() {
+        return attribute.getName() + " " + comparison + " " + value;
+    }
 }

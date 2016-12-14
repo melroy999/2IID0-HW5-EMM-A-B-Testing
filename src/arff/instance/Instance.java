@@ -6,7 +6,7 @@ import com.sun.org.apache.xpath.internal.operations.Bool;
 import java.util.List;
 
 /**
- * Class representing an instance within the ARFF file.
+ * Class representing an instance within the Dataset file.
  */
 public class Instance {
     //The id of the instance.
