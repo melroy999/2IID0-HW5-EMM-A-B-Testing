@@ -1,4 +1,4 @@
-package result;
+package search.result;
 
 public class ConfusionMatrix {
     public final double p;

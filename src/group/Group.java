@@ -1,6 +1,9 @@
 package group;
 
+import arff.Dataset;
 import arff.attribute.Constraint;
+import search.quality.AbstractQualityMeasure;
+
 import java.util.HashSet;
 import java.util.List;
 
@@ -11,17 +14,17 @@ public class Group {
     //The product of all primes within the group.
     private final long product;
 
+    //The evaluation value of this group.
+    private double evaluation;
+
     /**
-     * Create a group of level-1 that uses the specified constraint.
-     *
-     * @param constraint The constraint that the group uses.
+     * Create an empty group.
      */
-    public Group(Constraint constraint) {
+    public Group() {
         this.constraints = new HashSet<>();
-        this.constraints.add(constraint);
 
         //Calculate the product of the constraints' primes.
-        this.product = constraint.getValuePrime() * constraint.getComparisonPrime();
+        this.product = 1;
     }
 
     /**
@@ -66,7 +69,7 @@ public class Group {
      * @return A new group containing the constraint if that addition is valid, {@code null} otherwise.
      */
     public Group extendGroupWith(Constraint constraint, HashSet<Long> encounteredGroups) {
-        long extendedProduct = this.product * constraint.getValuePrime() * constraint.getComparisonPrime();
+        long extendedProduct = this.product * constraint.getProduct();
 
         //Check whether the extension would be valid or not.
         if(isValidExtension(constraint, encounteredGroups, extendedProduct)) {
@@ -112,5 +115,34 @@ public class Group {
         }
 
         return result;
+    }
+
+    /**
+     * Get the evaluation value of this group.
+     *
+     * @return The evaluation value.
+     */
+    public double getEvaluation() {
+        return evaluation;
+    }
+
+    /**
+     * Set the evaluation value.
+     *
+     * @param evaluation The new evaluation value.
+     */
+    public void setEvaluation(double evaluation) {
+        this.evaluation = evaluation;
+    }
+
+    /**
+     * Evaluate the quality of this group.
+     *
+     * @param qualityMeasure The quality measure to use.
+     * @param dataset The dataset to take the data from.
+     * @return The evaluation value according to the quality measure.
+     */
+    public double evaluateQuality(AbstractQualityMeasure qualityMeasure, Dataset dataset) {
+        return 0;
     }
 }

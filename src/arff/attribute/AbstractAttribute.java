@@ -3,7 +3,7 @@ package arff.attribute;
 import arff.Dataset;
 import arff.instance.Instance;
 import group.Comparison;
-import result.ConfusionMatrix;
+import search.result.ConfusionMatrix;
 import util.SieveOfAtkin;
 
 import java.util.*;
@@ -34,6 +34,9 @@ public abstract class AbstractAttribute<T> {
 
     //The list of constraints.
     private final ArrayList<Constraint<T>> constraints = new ArrayList<>();
+
+    //Mapping from string representation to constraint value.
+    private final HashMap<String, Constraint<T>> stringToConstraint = new HashMap<>();
 
     //Sorted indices of the instances.
     private final ArrayList<Integer> sortedIndices = new ArrayList<>();
@@ -134,6 +137,7 @@ public abstract class AbstractAttribute<T> {
             for(Comparison comparison : value != null ? getComparisons() : new Comparison[]{Comparison.EQ}) {
                 Constraint<T> constraint = new Constraint<>(value, comparison, this, primeMap.get(comparison), prime);
                 constraints.add(constraint);
+                stringToConstraint.put(constraint.toString(), constraint);
 
                 //Get the confusion matrix.
                 ConfusionMatrix confusionMatrix = calculateConfusionMatrix(constraint, dataset);
@@ -198,6 +202,21 @@ public abstract class AbstractAttribute<T> {
     }
 
     /**
+     * Get the indices corresponding to the null case.
+     *
+     * @return The indices to the null case, empty if null is not present within the set.
+     */
+    public List<Integer> getNullIndices() {
+        Constraint<T> nullConstraint = stringToConstraint.get(name + " = null");
+        //No null cases, so return an empty list.
+        if(nullConstraint == null) {
+            return new ArrayList<>();
+        } else {
+            return getIndicesSubsetForValue(nullConstraint);
+        }
+    }
+
+    /**
      * Get the subset of the indices list that are covered by the constraint.
      *
      * @param constraint The constraint used.
@@ -216,11 +235,11 @@ public abstract class AbstractAttribute<T> {
         if(value == null) {
             //Get the start and end indices.
             indexStart = nullStartIndex;
-            indexEnd = size - 1;
+            indexEnd = size;
         } else {
             //Get the start and end indices.
             indexStart = valueIndicesStart.get(value);
-            indexEnd = valueIndicesEnd.get(value);
+            indexEnd = valueIndicesEnd.get(value) + 1;
         }
 
         //Create the indices arraylist.
@@ -238,12 +257,13 @@ public abstract class AbstractAttribute<T> {
                     //if we are violating the range check, create an empty array.
                     indices = new ArrayList<>();
                 } else {
-                    indices = sortedIndices.subList(0, indexStart - 1);
+                    indices = sortedIndices.subList(0, indexStart);
                 }
 
                 //Make certain that the indexEnd + 1 is within bounds.
-                if(indexEnd + 1 <= size - 1) {
-                    indices.addAll(sortedIndices.subList(indexEnd + 1, size - 1));
+                if(indexEnd <= size - 1) {
+                    //Index end is already +1, so don't do it here!
+                    indices.addAll(sortedIndices.subList(indexEnd, size));
                 }
                 break;
             case LTEQ:
@@ -252,7 +272,7 @@ public abstract class AbstractAttribute<T> {
                 break;
             case GTEQ:
                 //Check the range from index start to list size.
-                indices = sortedIndices.subList(indexStart, size - 1);
+                indices = sortedIndices.subList(indexStart, size);
                 break;
         }
         return indices;
@@ -310,6 +330,16 @@ public abstract class AbstractAttribute<T> {
     }
 
     /**
+     * Get the constraint based on its string version.
+     *
+     * @param name The string version of the constraint.
+     * @return The constraint that is connected to the name, if it exist. null otherwise.
+     */
+    public Constraint<T> getConstraint(String name) {
+        return stringToConstraint.get(name);
+    }
+
+    /**
      * Get the list of comparisons used by this attribute.
      *
      * @return The list of comparisons.
@@ -323,7 +353,7 @@ public abstract class AbstractAttribute<T> {
      * @return The confusion matrix connected to the value and the comparison.
      */
     public ConfusionMatrix getConfusionMatrix(Constraint<T> constraint) {
-        return constraintToConfusionMatrix.get(constraint.getValuePrime());
+        return constraintToConfusionMatrix.get(constraint.getProduct());
     }
 
     /**
@@ -333,7 +363,7 @@ public abstract class AbstractAttribute<T> {
      * @param confusionMatrix The confusion matrix itself.
      */
     private void addConfusionMatrix(Constraint<T> constraint, ConfusionMatrix confusionMatrix) {
-        constraintToConfusionMatrix.put(constraint.getValuePrime(), confusionMatrix);
+        constraintToConfusionMatrix.put(constraint.getProduct(), confusionMatrix);
     }
 
     /**
