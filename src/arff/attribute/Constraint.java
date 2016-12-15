@@ -6,6 +6,7 @@ import util.SieveOfAtkin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class Constraint<T> {
     //Values denoting a constraint.
@@ -69,11 +70,11 @@ public class Constraint<T> {
         return attribute;
     }
 
-    public List<Integer> getIndicesSubsetForValue() {
+    public Set<Integer> getIndicesSubsetForValue() {
         return attribute.getIndicesSubsetForValue(this);
     }
 
-    public List<Integer> getNullIndices() {
+    public Set<Integer> getNullIndices() {
         return attribute.getNullIndices();
     }
 

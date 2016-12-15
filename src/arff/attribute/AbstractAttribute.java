@@ -174,7 +174,7 @@ public abstract class AbstractAttribute<T> {
         double un = 0;
 
         //Get a subset of the indices set containing the values that are covered by the comparison and value combination.
-        List<Integer> indices = getIndicesSubsetForValue(constraint);
+        Set<Integer> indices = getIndicesSubsetForValue(constraint);
 
         //The target attribute.
         AbstractAttribute targetAttribute = dataset.getTargetAttribute();
@@ -214,13 +214,13 @@ public abstract class AbstractAttribute<T> {
      *
      * @return The indices to the null case, empty if null is not present within the set.
      */
-    public List<Integer> getNullIndices() {
+    public Set<Integer> getNullIndices() {
         Constraint<T> nullConstraint = stringToConstraint.get(name + " = null");
         //No null cases, so return an empty list.
         if(nullConstraint == null) {
-            return new ArrayList<>();
+            return new HashSet<>();
         } else {
-            return getIndicesSubsetForValue(nullConstraint);
+            return new HashSet<>(getIndicesSubsetForValue(nullConstraint));
         }
     }
 
@@ -230,7 +230,7 @@ public abstract class AbstractAttribute<T> {
      * @param constraint The constraint used.
      * @return A subset containing the indices of all instances that are covered by the constraint.
      */
-    public List<Integer> getIndicesSubsetForValue(Constraint<T> constraint) {
+    public Set<Integer> getIndicesSubsetForValue(Constraint<T> constraint) {
         //Get the start and end indices.
         int indexStart;
         int indexEnd;
@@ -251,21 +251,21 @@ public abstract class AbstractAttribute<T> {
         }
 
         //Create the indices arraylist.
-        List<Integer> indices = new ArrayList<>();
+        Set<Integer> indices = new HashSet<>();
 
         //Based on the constrain comparison mode, we will do something with the indexStart and indexEnd.
         switch (comparison) {
             case EQ:
                 //Check range between index start and index end.
-                indices = sortedIndices.subList(indexStart, indexEnd);
+                indices.addAll(sortedIndices.subList(indexStart, indexEnd));
                 break;
             case NEQ:
                 //Check range between 0 and index start - 1, and index end + 1 till the end of the array.
                 if(indexStart - 1 < 0) {
                     //if we are violating the range check, create an empty array.
-                    indices = new ArrayList<>();
+                    //indices = new ArrayList<>();
                 } else {
-                    indices = sortedIndices.subList(0, indexStart);
+                    indices.addAll(sortedIndices.subList(0, indexStart));
                 }
 
                 //Make certain that the indexEnd + 1 is within bounds.
@@ -276,11 +276,11 @@ public abstract class AbstractAttribute<T> {
                 break;
             case LTEQ:
                 //Check the range from 0 to index end.
-                indices = sortedIndices.subList(0, indexEnd);
+                indices.addAll(sortedIndices.subList(0, indexEnd));
                 break;
             case GTEQ:
                 //Check the range from index start to list size.
-                indices = sortedIndices.subList(indexStart, nullStartIndex == -1 ? size : nullStartIndex);
+                indices.addAll(sortedIndices.subList(indexStart, nullStartIndex == -1 ? size : nullStartIndex));
                 break;
         }
         return indices;

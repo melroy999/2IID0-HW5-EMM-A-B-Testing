@@ -36,7 +36,7 @@ public class BeamSearch {
         Constraint constraint = dataset.getTargetConstraint();
 
         //Determine which indices are in the positive set.
-        List<Integer> positives = targetAttribute.getIndicesSubsetForValue(constraint);
+        Set<Integer> positives = targetAttribute.getIndicesSubsetForValue(constraint);
 
         //Iterate for all levels.
         for(int level = 1; level <= d; level++) {
@@ -51,7 +51,7 @@ public class BeamSearch {
                 Group seed = candidateQueue.poll();
 
                 //All groups are based on the seed, so we should save the information of the seed, and use this for further calculations.
-                List<Integer> seedIndices = seed.getIndicesSubset();
+                Set<Integer> seedIndices = seed.getIndicesSubset();
 
                 //The null seeds.
                 Set<Integer> seedNullIndices = seed.getNullIndicesSubset();

@@ -112,8 +112,8 @@ public class Group implements Comparable<Group> {
      *
      * @return Intersection of all subsets.
      */
-    public List<Integer> getIndicesSubset() {
-        List<List<Integer>> lists = new ArrayList<>();
+    public Set<Integer> getIndicesSubset() {
+        List<Set<Integer>> lists = new ArrayList<>();
 
         //Get all the indice subset lists.
         for(Constraint constraint : constraints) {
@@ -121,9 +121,9 @@ public class Group implements Comparable<Group> {
         }
 
         //Sort the list on their size.
-        Collections.sort(lists, new Comparator<List<Integer>>() {
+        Collections.sort(lists, new Comparator<Set<Integer>>() {
             @Override
-            public int compare(List<Integer> o1, List<Integer> o2) {
+            public int compare(Set<Integer> o1, Set<Integer> o2) {
                 return Integer.compare(o1.size(), o2.size());
             }
         });
@@ -134,7 +134,7 @@ public class Group implements Comparable<Group> {
         }
 
         //Start the retain all chain.
-        List<Integer> result = new ArrayList<>(lists.get(0));
+        Set<Integer> result = new HashSet<>(lists.get(0));
         for(int i = 1; i < lists.size(); i++) {
             result.retainAll(lists.get(i));
         }
@@ -148,7 +148,7 @@ public class Group implements Comparable<Group> {
      * @return The union of all null indices subsets.
      */
     public Set<Integer> getNullIndicesSubset() {
-        List<List<Integer>> lists = new ArrayList<>();
+        List<Set<Integer>> lists = new ArrayList<>();
 
         //Get all the indice subset lists.
         for(Constraint constraint : constraints) {
@@ -156,9 +156,9 @@ public class Group implements Comparable<Group> {
         }
 
         //Sort the list on their size.
-        Collections.sort(lists, new Comparator<List<Integer>>() {
+        Collections.sort(lists, new Comparator<Set<Integer>>() {
             @Override
-            public int compare(List<Integer> o1, List<Integer> o2) {
+            public int compare(Set<Integer> o1, Set<Integer> o2) {
                 return Integer.compare(o1.size(), o2.size());
             }
         });
@@ -194,37 +194,37 @@ public class Group implements Comparable<Group> {
         this.evaluation = evaluation;
     }
 
-    public ConfusionMatrix getConfusionMatrix(Dataset dataset, List<Integer> seedIndices, Set<Integer> seedNullInstances, List<Integer> positives) {
+    public ConfusionMatrix getConfusionMatrix(Dataset dataset, Set<Integer> seedIndices, Set<Integer> seedNullInstances, Set<Integer> positives) {
         //Last addition:
         Constraint newConstraint = constraints.peekLast();
 
         //Get the intersection of all the indices lists.
-        List<Integer> indices;
+        Set<Integer> indices = new HashSet<>();
 
         //Make sure that the passed list of indices is not null.
         if(seedIndices != null) {
-            indices = new ArrayList<>(seedIndices);
+            indices.addAll(seedIndices);
 
             //Do the intersection.
             indices.retainAll(newConstraint.getIndicesSubsetForValue());
         } else {
-            indices = new ArrayList<>(newConstraint.getIndicesSubsetForValue());
+            indices.addAll(newConstraint.getIndicesSubsetForValue());
         }
 
         //The coverage is the size of the list.
         int coverage = indices.size();
 
         //Get the intersection of all the indices lists.
-        Set<Integer> nullList;
+        Set<Integer> nullList = new HashSet<>();
 
         //Make sure that the passed list of indices is not null.
         if(seedIndices != null) {
-            nullList = new HashSet<>(seedNullInstances);
+            nullList.addAll(seedNullInstances);
 
             //Do the intersection.
             nullList.addAll(newConstraint.getNullIndices());
         } else {
-            nullList = new HashSet<>(newConstraint.getNullIndices());
+            nullList.addAll(newConstraint.getNullIndices());
         }
 
         //Get the amount of null cases.
@@ -253,7 +253,7 @@ public class Group implements Comparable<Group> {
      * @param positives
      * @return The evaluation value according to the quality measure.
      */
-    public double evaluateQuality(AbstractQualityMeasure qualityMeasure, Dataset dataset, List<Integer> seedIndices, Set<Integer> seedNullInstances, List<Integer> positives) {
+    public double evaluateQuality(AbstractQualityMeasure qualityMeasure, Dataset dataset, Set<Integer> seedIndices, Set<Integer> seedNullInstances, Set<Integer> positives) {
         //We will first need the confusion matrix.
         this.confusionMatrix = getConfusionMatrix(dataset, seedIndices, seedNullInstances, positives);
 
