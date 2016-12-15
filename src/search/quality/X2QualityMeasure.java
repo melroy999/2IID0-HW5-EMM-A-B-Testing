@@ -8,6 +8,10 @@ package search.quality;
  */
 public class X2QualityMeasure extends AbstractQualityMeasure {
 
+    public X2QualityMeasure(double minimumValue) {
+        super(minimumValue);
+    }
+
     /**
      * Evaluate the given confusion table.
      *

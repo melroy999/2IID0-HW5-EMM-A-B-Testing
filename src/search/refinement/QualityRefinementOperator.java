@@ -11,7 +11,7 @@ import java.util.Set;
 
 public class QualityRefinementOperator extends AbstractRefinementOperator {
     @Override
-    public Set<Group> generate(Group seed, Dataset dataset, AbstractQualityMeasure qualityMeasure, HashSet<Long> encounteredGroups, HashSet<String> blacklist, double minimumQuality) {
+    public Set<Group> generate(Group seed, Dataset dataset, AbstractQualityMeasure qualityMeasure, HashSet<Long> encounteredGroups, HashSet<String> blacklist) {
         HashSet<Group> groups = new HashSet<>();
         //Extend the seed by attributes and constraints that are not similar.
 
@@ -29,7 +29,7 @@ public class QualityRefinementOperator extends AbstractRefinementOperator {
                 //Check if the quality of the constraint is sufficient.
                 double quality = attribute.getConstraintEvaluation(constraint);
 
-                if(quality < minimumQuality) {
+                if(quality < qualityMeasure.getMinimumValue()) {
                     continue;
                 }
 

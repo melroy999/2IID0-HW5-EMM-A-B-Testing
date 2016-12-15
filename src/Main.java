@@ -48,28 +48,28 @@ public class Main {
             System.out.println("= Weighted relative accuracy ===============================================================================");
             System.out.println("Heuristic: ((p + n) / (P + N)) * (p / (p + n) - P / (P + N))");
             Date start = new Date();
-            GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, MINIMUM_QUALITY, true).search(dataset, new WeightedRelativeAccuracyQualityMeasure(), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
+            GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, true).search(dataset, new WeightedRelativeAccuracyQualityMeasure(0.02), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
             Date end = new Date();
             printQueue(queue, start, end);
 
             System.out.println("= Sensitivity quality measure ==============================================================================");
             System.out.println("Heuristic: p / P");
             start = new Date();
-            queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, MINIMUM_QUALITY, true).search(dataset, new SensitivityQualityMeasure(), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
+            queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, true).search(dataset, new SensitivityQualityMeasure(0.5), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
             end = new Date();
             printQueue(queue, start, end);
 
             System.out.println("= Specificity quality measure ==============================================================================");
             System.out.println("Heuristic: 1 - n / N");
             start = new Date();
-            queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, MINIMUM_QUALITY, true).search(dataset, new SpecificityQualityMeasure(), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
+            queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, true).search(dataset, new SpecificityQualityMeasure(0.5), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
             end = new Date();
             printQueue(queue, start, end);
 
             System.out.println("= x2 =======================================================================================================");
             System.out.println("Heuristic: (((p * N - P * n) * (p * N - P * n)) / (P + N)) * ((P + N) * (P + N) / (P * N * (p + n) * (P + N - p - n)))");
             start = new Date();
-            queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, MINIMUM_QUALITY, true).search(dataset, new X2QualityMeasure(), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
+            queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, true).search(dataset, new X2QualityMeasure(500), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
             end = new Date();
             printQueue(queue, start, end);
         } catch (Exception e) {

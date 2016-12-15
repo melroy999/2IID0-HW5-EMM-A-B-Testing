@@ -7,6 +7,11 @@ package search.quality;
  * ROC 'n' Rule Learning - Towards a Better Understanding of Covering Algorithms, Machine Learning 58(1):39{77, 2005.
  */
 public class SensitivityQualityMeasure extends AbstractQualityMeasure {
+
+    public SensitivityQualityMeasure(double minimumValue) {
+        super(minimumValue);
+    }
+
     /**
      * Evaluate the given confusion table.
      *

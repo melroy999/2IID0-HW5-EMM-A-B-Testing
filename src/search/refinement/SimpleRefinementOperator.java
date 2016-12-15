@@ -11,7 +11,7 @@ import java.util.Set;
 
 public class SimpleRefinementOperator extends AbstractRefinementOperator {
     @Override
-    public Set<Group> generate(Group seed, Dataset dataset, AbstractQualityMeasure qualityMeasure, HashSet<Long> encounteredGroups, HashSet<String> blacklist, double minimumQuality) {
+    public Set<Group> generate(Group seed, Dataset dataset, AbstractQualityMeasure qualityMeasure, HashSet<Long> encounteredGroups, HashSet<String> blacklist) {
         HashSet<Group> groups = new HashSet<>();
         //Extend the seed by attributes and constraints that are not similar.
 

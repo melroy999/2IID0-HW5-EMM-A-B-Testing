@@ -21,13 +21,11 @@ public class BeamSearch {
     private ExecutorService executor;
     private final double minimumCoverage;
     private final double maximumCoverageFraction;
-    private final double minimumQuality;
     private final boolean multiThreading;
 
-    public BeamSearch(double minimumCoverage, double maximumCoverageFraction, double minimumQuality, boolean multiThreading) {
+    public BeamSearch(double minimumCoverage, double maximumCoverageFraction, boolean multiThreading) {
         this.minimumCoverage = minimumCoverage;
         this.maximumCoverageFraction = maximumCoverageFraction;
-        this.minimumQuality = minimumQuality;
         this.multiThreading = multiThreading;
     }
 
@@ -81,7 +79,7 @@ public class BeamSearch {
                 System.out.println(Util.getCurrentTimeStamp() + " >>> >>> ConfusionTable: " + seed.getConfusionMatrix());
 
                 //Get the candidate subgroups from the seed.
-                Set<Group> groups = refinementOperator.generate(seed, dataset, qualityMeasure, encounteredGroups, blacklist, minimumQuality);
+                Set<Group> groups = refinementOperator.generate(seed, dataset, qualityMeasure, encounteredGroups, blacklist);
 
                 //Iterate over all the groups, do this with multithreading if desired.
                 if(multiThreading) {
@@ -125,7 +123,7 @@ public class BeamSearch {
             double quality = group.evaluateQuality(qualityMeasure, dataset, seedIndices, seedNullIndices, positives);
 
             //If the group satisfies all constraints.
-            if(quality > minimumQuality && group.getConfusionMatrix().getCoverage() > minimumCoverage && group.getConfusionMatrix().getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
+            if(quality > qualityMeasure.getMinimumValue() && group.getConfusionMatrix().getCoverage() > minimumCoverage && group.getConfusionMatrix().getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
                 //Add it to the result set.
                 resultSet.add(group);
 
@@ -166,7 +164,7 @@ public class BeamSearch {
                     double quality = group.evaluateQuality(qualityMeasure, dataset, seedIndices, seedNullIndices, positives);
 
                     //If the group satisfies all constraints.
-                    if(quality > minimumQuality && group.getConfusionMatrix().getCoverage() > minimumCoverage && group.getConfusionMatrix().getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
+                    if(quality > qualityMeasure.getMinimumValue() && group.getConfusionMatrix().getCoverage() > minimumCoverage && group.getConfusionMatrix().getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
                         //Add it to the result set.
                         resultSet.add(group);
 

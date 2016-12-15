@@ -4,6 +4,16 @@ package search.quality;
  * Abstract version of a quality measure.
  */
 public abstract class AbstractQualityMeasure {
+    private final double minimumValue;
+
+    public AbstractQualityMeasure(double minimumValue) {
+        this.minimumValue = minimumValue;
+    }
+
+    public double getMinimumValue() {
+        return minimumValue;
+    }
+
     /**
      * Evaluate the given confusion table.
      *
