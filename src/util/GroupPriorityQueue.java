@@ -12,8 +12,14 @@ public class GroupPriorityQueue extends TreeSet<Group> {
         this.maximumCapacity = maximumCapacity;
     }
 
+    /**
+     * Add the group to the priority queue. This method is synchronized, as it is used during multithreading.
+     *
+     * @param group The group to add.
+     * @return Whether the group has been added successfully or not.
+     */
     @Override
-    public boolean add(Group group) {
+    public synchronized boolean add(Group group) {
         boolean returnValue = super.add(group);
         //Check if we are exceeding the maximum capacity.
         if(this.size() > maximumCapacity) {

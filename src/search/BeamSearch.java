@@ -9,16 +9,27 @@ import search.refinement.AbstractRefinementOperator;
 import util.GroupPriorityQueue;
 import util.Util;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Class performing beam search.
  */
 public class BeamSearch {
-    public GroupPriorityQueue search(Dataset dataset, AbstractQualityMeasure qualityMeasure, AbstractRefinementOperator refinementOperator, int w, int d, int resultSetSize, HashSet<String> blacklist) {
+    private ExecutorService executor;
+    private final boolean multiThreading;
+
+    public BeamSearch(boolean multiThreading) {
+        this.multiThreading = multiThreading;
+    }
+
+    public GroupPriorityQueue search(Dataset dataset, AbstractQualityMeasure qualityMeasure, AbstractRefinementOperator refinementOperator, int w, int d, int resultSetSize, HashSet<String> blacklist) throws InterruptedException {
+        //Create the executor.
+        executor = Executors.newFixedThreadPool(8);
+
         //Create a candidate queue, and add the empty seed as the first element.
         PriorityQueue<Group> candidateQueue = new PriorityQueue<>();
         candidateQueue.add(new Group());
@@ -62,10 +73,85 @@ public class BeamSearch {
                 //Get the candidate subgroups from the seed.
                 Set<Group> groups = refinementOperator.generate(seed, dataset, encounteredGroups, blacklist);
 
-                //Iterate over all these groups.
-                for(Group group : groups) {
-                    //System.out.println(Util.getCurrentTimeStamp() + " Evaluating seed " + group);
+                //Iterate over all the groups, do this with multithreading if desired.
+                if(multiThreading) {
+                    iterateOverGroupsThreaded(dataset, qualityMeasure, resultSet, positives, beam, seedIndices, seedNullIndices, groups);
+                } else {
+                    iterateOverGroups(dataset, qualityMeasure, resultSet, positives, beam, seedIndices, seedNullIndices, groups);
+                }
+            }
 
+            //Empty the beam, and enqueue the beam elements into the candidate queue.
+            while(!beam.isEmpty()) {
+                //Add the first element within the beam.
+                candidateQueue.add(beam.pollFirst());
+            }
+        }
+
+        //Shut down the executor.
+        executor.shutdown();
+
+        return resultSet;
+    }
+
+    /**
+     * A simple implementation of iterating over groups, without multithreading.
+     *
+     * @param dataset
+     * @param qualityMeasure
+     * @param resultSet
+     * @param positives
+     * @param beam
+     * @param seedIndices
+     * @param seedNullIndices
+     * @param groups
+     */
+    private void iterateOverGroups(Dataset dataset, AbstractQualityMeasure qualityMeasure, GroupPriorityQueue resultSet, Set<Integer> positives, GroupPriorityQueue beam, Set<Integer> seedIndices, Set<Integer> seedNullIndices, Set<Group> groups) {
+        //Iterate over all these groups.
+        for(Group group : groups) {
+            //System.out.println(Util.getCurrentTimeStamp() + " Evaluating seed " + group);
+
+            //Get the quality.
+            double quality = group.evaluateQuality(qualityMeasure, dataset, seedIndices, seedNullIndices, positives);
+
+            //If the group satisfies all constraints.
+            if(quality > 0) {
+                //Add it to the result set.
+                resultSet.add(group);
+
+                //Insert it into the beam.
+                beam.add(group);
+            }
+        }
+    }
+
+    /**
+     * Iterating over groups with multithreading.
+     *
+     * @param dataset
+     * @param qualityMeasure
+     * @param resultSet
+     * @param positives
+     * @param beam
+     * @param seedIndices
+     * @param seedNullIndices
+     * @param groups
+     */
+    private void iterateOverGroupsThreaded(Dataset dataset, AbstractQualityMeasure qualityMeasure, GroupPriorityQueue resultSet, Set<Integer> positives, GroupPriorityQueue beam, Set<Integer> seedIndices, Set<Integer> seedNullIndices, Set<Group> groups) throws InterruptedException {
+        //Create a collection of callables that have to be ran.
+        Collection<Callable<Group>> callables = new ArrayList<>();
+
+        //Iterate over all these groups.
+        for(Group group : groups) {
+            callables.add(new Callable<Group>() {
+                /**
+                 * Computes a result, or throws an exception if unable to do so.
+                 *
+                 * @return computed result
+                 * @throws Exception if unable to compute a result
+                 */
+                @Override
+                public Group call() throws Exception {
                     //Get the quality.
                     double quality = group.evaluateQuality(qualityMeasure, dataset, seedIndices, seedNullIndices, positives);
 
@@ -77,16 +163,13 @@ public class BeamSearch {
                         //Insert it into the beam.
                         beam.add(group);
                     }
+                    return null;
                 }
-            }
-
-            //Empty the beam, and enqueue the beam elements into the candidate queue.
-            while(!beam.isEmpty()) {
-                //Add the first element within the beam.
-                candidateQueue.add(beam.pollFirst());
-            }
+            });
         }
 
-        return resultSet;
+        //We have to keep in mind that this can throw an exception.
+            //Invoke all these callables, and wait untill they are all finished.
+            executor.invokeAll(callables);
     }
 }
