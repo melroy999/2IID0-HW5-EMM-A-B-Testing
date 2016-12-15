@@ -113,6 +113,7 @@ public class Group implements Comparable<Group> {
      * @return Intersection of all subsets.
      */
     public Set<Integer> getIndicesSubset() {
+        //We want the subsets to be sets, as this has a lot better contains performance than lists.
         List<Set<Integer>> lists = new ArrayList<>();
 
         //Get all the indice subset lists.
@@ -148,6 +149,7 @@ public class Group implements Comparable<Group> {
      * @return The union of all null indices subsets.
      */
     public Set<Integer> getNullIndicesSubset() {
+        //We want the subsets to be sets, as this has a lot better contains performance than lists.
         List<Set<Integer>> lists = new ArrayList<>();
 
         //Get all the indice subset lists.
@@ -199,10 +201,14 @@ public class Group implements Comparable<Group> {
         Constraint newConstraint = constraints.peekLast();
 
         //Get the intersection of all the indices lists.
+        //We ADD the new values to this list, instead of overwriting it, as we do not want to edit the original.
+        //Add all the indices to a new instance, this way we will not edit the original lists.
         Set<Integer> indices = new HashSet<>();
 
         //Make sure that the passed list of indices is not null.
         if(seedIndices != null) {
+            //We start with the seed indices, as these will be smaller than the individual attribute's value
+            //in most of the cases. As addAll iterates over the original list, less iterations will be performed.
             indices.addAll(seedIndices);
 
             //Do the intersection.
@@ -219,6 +225,8 @@ public class Group implements Comparable<Group> {
 
         //Make sure that the passed list of indices is not null.
         if(seedIndices != null) {
+            //For addAll the order does not really matter. However, as the size of the null indices increases the more
+            //seeds we have, more indices will probably be already contained, which gives better performance when adding.
             nullList.addAll(seedNullInstances);
 
             //Do the intersection.

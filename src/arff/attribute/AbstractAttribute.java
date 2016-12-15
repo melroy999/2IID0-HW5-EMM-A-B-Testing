@@ -250,7 +250,8 @@ public abstract class AbstractAttribute<T> {
             indexEnd = valueIndicesEnd.get(value) + 1;
         }
 
-        //Create the indices arraylist.
+        //Create the indices set.
+        //We want the subsets to be sets, as these have a lot better contains performance than lists.
         Set<Integer> indices = new HashSet<>();
 
         //Based on the constrain comparison mode, we will do something with the indexStart and indexEnd.
