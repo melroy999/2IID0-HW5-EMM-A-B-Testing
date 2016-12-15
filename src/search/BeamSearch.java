@@ -9,7 +9,6 @@ import search.refinement.AbstractRefinementOperator;
 import util.GroupPriorityQueue;
 import util.Util;
 
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -36,6 +35,11 @@ public class BeamSearch {
         //Create the executor.
         executor = Executors.newFixedThreadPool(8);
 
+        //Initialize all the attributes.
+        for(AbstractAttribute attribute : dataset.getAttributes()) {
+            attribute.initializeConfusionMatrices(dataset, qualityMeasure);
+        }
+
         //Create a candidate queue, and add the empty seed as the first element.
         PriorityQueue<Group> candidateQueue = new PriorityQueue<>();
         candidateQueue.add(new Group());
@@ -57,7 +61,7 @@ public class BeamSearch {
 
         //Iterate for all levels.
         for(int level = 1; level <= d; level++) {
-            System.out.println(Util.getCurrentTimeStamp() + " Entering level " + level);
+            System.out.println(Util.getCurrentTimeStamp() + " >>> Entering level " + level);
 
             //Create the beam, which has a maximum amount of w entries.
             GroupPriorityQueue beam = new GroupPriorityQueue(w);
@@ -73,11 +77,11 @@ public class BeamSearch {
                 //The null seeds.
                 Set<Integer> seedNullIndices = seed.getNullIndicesSubset();
 
-                System.out.println(Util.getCurrentTimeStamp() + " Evaluating seed " + seed);
-                System.out.println("ConfusionTable: " + seed.getConfusionMatrix());
+                System.out.println(Util.getCurrentTimeStamp() + " >>> >>> Evaluating seed " + seed);
+                System.out.println(Util.getCurrentTimeStamp() + " >>> >>> ConfusionTable: " + seed.getConfusionMatrix());
 
                 //Get the candidate subgroups from the seed.
-                Set<Group> groups = refinementOperator.generate(seed, dataset, encounteredGroups, blacklist);
+                Set<Group> groups = refinementOperator.generate(seed, dataset, qualityMeasure, encounteredGroups, blacklist, minimumQuality);
 
                 //Iterate over all the groups, do this with multithreading if desired.
                 if(multiThreading) {
@@ -175,7 +179,7 @@ public class BeamSearch {
         }
 
         //We have to keep in mind that this can throw an exception.
-            //Invoke all these callables, and wait untill they are all finished.
-            executor.invokeAll(callables);
+        //Invoke all these callables, and wait untill they are all finished.
+        executor.invokeAll(callables);
     }
 }

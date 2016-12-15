@@ -340,4 +340,8 @@ public class Group implements Comparable<Group> {
     public ConfusionMatrix getConfusionMatrix() {
         return confusionMatrix;
     }
+
+    public Constraint getFirstConstraint() {
+        return constraints.peekFirst();
+    }
 }

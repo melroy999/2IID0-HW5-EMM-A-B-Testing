@@ -60,11 +60,6 @@ public class Dataset {
         //Set the P and N values.
         this.P = P;
         this.N = N;
-
-        //Initialize all the attributes.
-        for(AbstractAttribute attribute : attributes) {
-            attribute.initializeConfusionMatrices(this);
-        }
     }
 
     /**

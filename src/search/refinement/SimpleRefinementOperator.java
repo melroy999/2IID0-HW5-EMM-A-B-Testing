@@ -4,13 +4,14 @@ import arff.Dataset;
 import arff.attribute.AbstractAttribute;
 import arff.attribute.Constraint;
 import group.Group;
+import search.quality.AbstractQualityMeasure;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class SimpleRefinementOperator extends AbstractRefinementOperator {
     @Override
-    public Set<Group> generate(Group seed, Dataset dataset, HashSet<Long> encounteredGroups, HashSet<String> blacklist) {
+    public Set<Group> generate(Group seed, Dataset dataset, AbstractQualityMeasure qualityMeasure, HashSet<Long> encounteredGroups, HashSet<String> blacklist, double minimumQuality) {
         HashSet<Group> groups = new HashSet<>();
         //Extend the seed by attributes and constraints that are not similar.
 

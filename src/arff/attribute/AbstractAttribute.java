@@ -3,6 +3,7 @@ package arff.attribute;
 import arff.Dataset;
 import arff.instance.Instance;
 import group.Comparison;
+import search.quality.AbstractQualityMeasure;
 import search.result.ConfusionMatrix;
 import util.SieveOfAtkin;
 
@@ -26,6 +27,9 @@ public abstract class AbstractAttribute<T> {
 
     //The list of confusion matrices.
     private final HashMap<Long, ConfusionMatrix> constraintToConfusionMatrix = new HashMap<>();
+
+    //The list of constraint quality results.
+    private final HashMap<Long, Double> constraintToEvaluation = new HashMap<>();
 
     //The list of unique values found.
     private final HashSet<T> values = new HashSet<>();
@@ -144,8 +148,9 @@ public abstract class AbstractAttribute<T> {
      * Initializes the attribute information sources.
      *
      * @param dataset The dataset file.
+     * @param qualityMeasure The quality measure to use.
      */
-    public void initializeConfusionMatrices(Dataset dataset) {
+    public void initializeConfusionMatrices(Dataset dataset, AbstractQualityMeasure qualityMeasure) {
         //Create the constraints.
         for(Constraint<T> constraint : constraints) {
             //Get the confusion matrix.
@@ -153,6 +158,9 @@ public abstract class AbstractAttribute<T> {
 
             //Add the confusion matrix.
             addConfusionMatrix(constraint, confusionMatrix);
+
+            //Add the score of the confusion matrix.
+            constraintToEvaluation.put(constraint.getProduct(), qualityMeasure.evaluate(confusionMatrix.p, confusionMatrix.n, confusionMatrix.P, confusionMatrix.N));
         }
     }
 
@@ -363,6 +371,16 @@ public abstract class AbstractAttribute<T> {
      */
     public ConfusionMatrix getConfusionMatrix(Constraint<T> constraint) {
         return constraintToConfusionMatrix.get(constraint.getProduct());
+    }
+
+    /**
+     * Get the quality of the single constraint.
+     *
+     * @param constraint The constraint used.
+     * @return The quality of the confusion matrix connected to the constraint.
+     */
+    public Double getConstraintEvaluation(Constraint<T> constraint) {
+        return constraintToEvaluation.get(constraint.getProduct());
     }
 
     /**
