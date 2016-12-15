@@ -20,9 +20,15 @@ import java.util.concurrent.Executors;
  */
 public class BeamSearch {
     private ExecutorService executor;
+    private final double minimumCoverage;
+    private final double maximumCoverageFraction;
+    private final double minimumQuality;
     private final boolean multiThreading;
 
-    public BeamSearch(boolean multiThreading) {
+    public BeamSearch(double minimumCoverage, double maximumCoverageFraction, double minimumQuality, boolean multiThreading) {
+        this.minimumCoverage = minimumCoverage;
+        this.maximumCoverageFraction = maximumCoverageFraction;
+        this.minimumQuality = minimumQuality;
         this.multiThreading = multiThreading;
     }
 
@@ -115,7 +121,7 @@ public class BeamSearch {
             double quality = group.evaluateQuality(qualityMeasure, dataset, seedIndices, seedNullIndices, positives);
 
             //If the group satisfies all constraints.
-            if(quality > 0) {
+            if(quality > minimumQuality && group.getConfusionMatrix().getCoverage() > minimumCoverage && group.getConfusionMatrix().getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
                 //Add it to the result set.
                 resultSet.add(group);
 
@@ -156,7 +162,7 @@ public class BeamSearch {
                     double quality = group.evaluateQuality(qualityMeasure, dataset, seedIndices, seedNullIndices, positives);
 
                     //If the group satisfies all constraints.
-                    if(quality > 0) {
+                    if(quality > minimumQuality && group.getConfusionMatrix().getCoverage() > minimumCoverage && group.getConfusionMatrix().getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
                         //Add it to the result set.
                         resultSet.add(group);
 

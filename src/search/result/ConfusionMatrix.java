@@ -31,4 +31,8 @@ public class ConfusionMatrix {
                 ", P+N=" + (P + N) +
                 '}';
     }
+
+    public double getCoverage() {
+        return p + n;
+    }
 }

@@ -317,10 +317,24 @@ public class Group implements Comparable<Group> {
     @Override
     public String toString() {
         return "Group{" +
-                "constraints=" + constraints +
+                "constraints=" + getReadableConstraints() +
                 ", product=" + product +
                 ", evaluation=" + evaluation +
                 '}';
+    }
+
+    public String getReadableConstraints() {
+        String result = "";
+        boolean isFirst = true;
+        for(Constraint constraint : constraints) {
+            if(isFirst) {
+                result += constraint.toString();
+                isFirst = false;
+            } else {
+                result += " \u2227 " + constraint.toString();
+            }
+        }
+        return result;
     }
 
     public ConfusionMatrix getConfusionMatrix() {
