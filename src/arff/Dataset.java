@@ -1,6 +1,7 @@
 package arff;
 
 import arff.attribute.AbstractAttribute;
+import arff.attribute.Constraint;
 import arff.instance.Instance;
 import group.Comparison;
 import util.FileLoader;
@@ -22,16 +23,26 @@ public class Dataset {
     private final int P;
     private final int N;
 
+    //Get the target constraint.
+    private final Constraint targetConstraint;
+
     //The target attribute.
     private final AbstractAttribute targetAttribute;
 
-    public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int targetId, String targetValue) {
+    public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int targetId, String targetValue, Comparison comparison) {
         this.instances = instances;
         this.attributes = attributes;
         this.relationName = relationName;
 
         this.targetAttribute = attributes.get(targetId);
-        this.targetAttribute.setTargetConstraint(targetValue, Comparison.EQ);
+
+        //Initialize all the attributes.
+        for(AbstractAttribute attribute : attributes) {
+            attribute.initialize(this);
+        }
+
+        //Set the target constraint.
+        this.targetConstraint = targetAttribute.getConstraint(targetAttribute.getName() + " " + comparison + " " + targetValue);
 
         //Intermediary counters.
         int P = 0;
@@ -39,7 +50,7 @@ public class Dataset {
 
         //Count the amount of positive and negative cases.
         for(Instance instance : instances) {
-            if(targetAttribute.matchesTargetValue(instance)) {
+            if(targetAttribute.matchesTargetValue(instance, this)) {
                 P++;
             } else {
                 N++;
@@ -52,7 +63,7 @@ public class Dataset {
 
         //Initialize all the attributes.
         for(AbstractAttribute attribute : attributes) {
-            attribute.initialize(this);
+            attribute.initializeConfusionMatrices(this);
         }
     }
 
@@ -140,6 +151,15 @@ public class Dataset {
             }
         }
 
-        return new Dataset(attributes, instances, relation, attributes.size() - 1, "1");
+        return new Dataset(attributes, instances, relation, attributes.size() - 1, "1", Comparison.EQ);
+    }
+
+    /**
+     * Get the target constraint.
+     *
+     * @return The target constraint.
+     */
+    public Constraint getTargetConstraint() {
+        return targetConstraint;
     }
 }

@@ -1,5 +1,6 @@
 package arff.attribute;
 
+import arff.instance.Instance;
 import group.Comparison;
 import util.SieveOfAtkin;
 
@@ -18,8 +19,8 @@ public class Constraint<T> {
     //The valuePrime that uniquely defines the comparison connected to the attribute id.
     private final long comparisonPrime;
 
-    //The product of this particular constraint.
-    private final long product;
+    //The product of the primes.
+    private final Long product;
 
     /**
      * Create a constraint on the attribute.
@@ -37,6 +38,7 @@ public class Constraint<T> {
 
         this.valuePrime = valuePrime;
         this.comparisonPrime = comparisonPrime;
+
         this.product = valuePrime * comparisonPrime;
     }
 
@@ -67,8 +69,12 @@ public class Constraint<T> {
         return attribute;
     }
 
-    public List<Integer> getIndicesSubsetForValue(Constraint<T> constraint) {
-        return attribute.getIndicesSubsetForValue(constraint);
+    public List<Integer> getIndicesSubsetForValue() {
+        return attribute.getIndicesSubsetForValue(this);
+    }
+
+    public List<Integer> getNullIndices() {
+        return attribute.getNullIndices();
     }
 
     /**
@@ -89,17 +95,21 @@ public class Constraint<T> {
         return comparisonPrime;
     }
 
-    /**
-     * Get the product of the two primes.
-     *
-     * @return The product of the value and comparator primes.
-     */
-    public long getProduct() {
-        return product;
-    }
-
     @Override
     public String toString() {
         return attribute.getName() + " " + comparison + " " + value;
+    }
+
+    /**
+     * Get the product of the two primes defining this constraint.
+     *
+     * @return The product of the value and comparison primes.
+     */
+    public Long getProduct() {
+        return product;
+    }
+
+    public boolean contains(Instance instance) {
+        return attribute.contains(this, instance);
     }
 }

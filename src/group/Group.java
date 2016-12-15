@@ -3,7 +3,7 @@ package group;
 import arff.Dataset;
 import arff.attribute.AbstractAttribute;
 import arff.attribute.Constraint;
-import com.sun.javafx.image.impl.IntArgb;
+import arff.instance.Instance;
 import search.quality.AbstractQualityMeasure;
 import search.result.ConfusionMatrix;
 
@@ -11,12 +11,12 @@ import java.util.*;
 
 public class Group implements Comparable<Group> {
     //The constraints used within the group.
-    private final HashSet<Constraint> constraints;
+    private final LinkedList<Constraint> constraints;
 
     //The product of all primes within the group.
     private final long product;
 
-    //The evaluation of this group.
+    //The evaluation value of this group.
     private double evaluation;
 
     //The confusion matrix.
@@ -26,7 +26,7 @@ public class Group implements Comparable<Group> {
      * Create an empty group.
      */
     public Group() {
-        this.constraints = new HashSet<>();
+        this.constraints = new LinkedList<>();
 
         //Calculate the product of the constraints' primes.
         this.product = 1;
@@ -40,7 +40,7 @@ public class Group implements Comparable<Group> {
      * @param extendedProduct The pre-calculated new product of the group.
      */
     private Group(Constraint constraint, Group group, long extendedProduct) {
-        this.constraints = new HashSet<>(group.getConstraints());
+        this.constraints = new LinkedList<>(group.getConstraints());
         this.constraints.add(constraint);
 
         //Calculate the product of the constraints' primes.
@@ -52,7 +52,7 @@ public class Group implements Comparable<Group> {
      *
      * @return The set of constraints that define the group.
      */
-    public HashSet<Constraint> getConstraints() {
+    public LinkedList<Constraint> getConstraints() {
         return constraints;
     }
 
@@ -67,16 +67,7 @@ public class Group implements Comparable<Group> {
     }
 
     /**
-     * Get the evaluation of this group.
-     *
-     * @return The evaluation of this group, which is 0 when not set.
-     */
-    public double getEvaluation() {
-        return evaluation;
-    }
-
-    /**
-     * Extend the specified group by the constraint. Also adds the group to the encountered group set.
+     * Extend the specified group by the constraint.
      *
      * @param constraint The constraint to extend by.
      * @param encounteredGroups The products of the groups we have already encountered.
@@ -87,7 +78,7 @@ public class Group implements Comparable<Group> {
 
         //Check whether the extension would be valid or not.
         if(isValidExtension(constraint, encounteredGroups, extendedProduct)) {
-            //Add the value to the encountered group set.
+            //Add the new product to the encountered groups list.
             encounteredGroups.add(extendedProduct);
 
             //If it is valid, we want to make the group.
@@ -126,7 +117,7 @@ public class Group implements Comparable<Group> {
 
         //Get all the indice subset lists.
         for(Constraint constraint : constraints) {
-            lists.add(constraint.getIndicesSubsetForValue(constraint));
+            lists.add(constraint.getIndicesSubsetForValue());
         }
 
         //Sort the list on their size.
@@ -137,9 +128,9 @@ public class Group implements Comparable<Group> {
             }
         });
 
-        //Debug
-        for(List<Integer> list : lists) {
-            System.out.println(list.size());
+        //Make sure we have data...
+        if(lists.isEmpty()) {
+            return null;
         }
 
         //Start the retain all chain.
@@ -148,9 +139,127 @@ public class Group implements Comparable<Group> {
             result.retainAll(lists.get(i));
         }
 
-        System.out.println("Size: " + result.size());
+        return result;
+    }
+
+    /**
+     * Get the null indices subset.
+     *
+     * @return The union of all null indices subsets.
+     */
+    public Set<Integer> getNullIndicesSubset() {
+        List<List<Integer>> lists = new ArrayList<>();
+
+        //Get all the indice subset lists.
+        for(Constraint constraint : constraints) {
+            lists.add(constraint.getNullIndices());
+        }
+
+        //Sort the list on their size.
+        Collections.sort(lists, new Comparator<List<Integer>>() {
+            @Override
+            public int compare(List<Integer> o1, List<Integer> o2) {
+                return Integer.compare(o1.size(), o2.size());
+            }
+        });
+
+        //Make sure we have data...
+        if(lists.isEmpty()) {
+            return null;
+        }
+
+        Set<Integer> result = new HashSet<>(lists.get(0));
+        for(int i = 1; i < lists.size(); i++) {
+            result.addAll(lists.get(i));
+        }
 
         return result;
+    }
+
+    /**
+     * Get the evaluation value of this group.
+     *
+     * @return The evaluation value.
+     */
+    public double getEvaluation() {
+        return evaluation;
+    }
+
+    /**
+     * Set the evaluation value.
+     *
+     * @param evaluation The new evaluation value.
+     */
+    public void setEvaluation(double evaluation) {
+        this.evaluation = evaluation;
+    }
+
+    public ConfusionMatrix getConfusionMatrix(Dataset dataset, List<Integer> seedIndices, Set<Integer> seedNullInstances, List<Integer> positives) {
+        //Last addition:
+        Constraint newConstraint = constraints.peekLast();
+
+        //Get the intersection of all the indices lists.
+        List<Integer> indices;
+
+        //Make sure that the passed list of indices is not null.
+        if(seedIndices != null) {
+            indices = new ArrayList<>(seedIndices);
+
+            //Do the intersection.
+            indices.retainAll(newConstraint.getIndicesSubsetForValue());
+        } else {
+            indices = new ArrayList<>(newConstraint.getIndicesSubsetForValue());
+        }
+
+        //The coverage is the size of the list.
+        int coverage = indices.size();
+
+        //Get the intersection of all the indices lists.
+        Set<Integer> nullList;
+
+        //Make sure that the passed list of indices is not null.
+        if(seedIndices != null) {
+            nullList = new HashSet<>(seedNullInstances);
+
+            //Do the intersection.
+            nullList.addAll(newConstraint.getNullIndices());
+        } else {
+            nullList = new HashSet<>(newConstraint.getNullIndices());
+        }
+
+        //Get the amount of null cases.
+        int nullCases = nullList.size();
+
+        //Only keep the positive values.
+        indices.retainAll(positives);
+
+        //The amount of positive instances is the size of the list that has only positives retained.
+        int p = indices.size();
+
+        //Only keep the positive values.
+        nullList.retainAll(positives);
+
+        //The amount of positive instances is the size of the list that has only positives retained.
+        int up = nullList.size();
+
+        return new ConfusionMatrix(p, coverage - p, up, nullCases - up, dataset.getP(), dataset.getN());
+    }
+
+    /**
+     * Evaluate the quality of this group.
+     *
+     * @param qualityMeasure The quality measure to use.
+     * @param dataset The dataset to take the data from.
+     * @param positives
+     * @return The evaluation value according to the quality measure.
+     */
+    public double evaluateQuality(AbstractQualityMeasure qualityMeasure, Dataset dataset, List<Integer> seedIndices, Set<Integer> seedNullInstances, List<Integer> positives) {
+        //We will first need the confusion matrix.
+        this.confusionMatrix = getConfusionMatrix(dataset, seedIndices, seedNullInstances, positives);
+
+        //Get the evaluation value.
+        this.evaluation = qualityMeasure.evaluate(confusionMatrix.p, confusionMatrix.n, confusionMatrix.P, confusionMatrix.N);
+        return this.evaluation;
     }
 
     /**
@@ -193,52 +302,20 @@ public class Group implements Comparable<Group> {
      */
     @Override
     public int compareTo(Group o) {
-        //Add a minus, as we want larger values first.
+        //Take the inverse, as we want higher values at the top.
         return -Double.compare(this.getEvaluation(), o.getEvaluation());
     }
 
-    /**
-     * Get the confusion matrix used within this group.
-     *
-     * @return The confusion matrix used within this group.
-     */
+    @Override
+    public String toString() {
+        return "Group{" +
+                "constraints=" + constraints +
+                ", product=" + product +
+                ", evaluation=" + evaluation +
+                '}';
+    }
+
     public ConfusionMatrix getConfusionMatrix() {
         return confusionMatrix;
-    }
-
-    public ConfusionMatrix getConfusionMatrix(Dataset dataset) {
-        //Get the intersection of all the indices lists.
-        List<Integer> indices = getIndicesSubset();
-
-        //The coverage is the size of the list.
-        int coverage = indices.size();
-
-        //The target attribute.
-        AbstractAttribute targetAttribute = dataset.getTargetAttribute();
-
-        //The constraint the target attribute uses.
-        Constraint constraint = targetAttribute.getTargetConstraint();
-
-        //Determine which indices are in the positive set.
-        List<Integer> positives = targetAttribute.getIndicesSubsetForValue(constraint);
-
-        //Only keep the positive values.
-        indices.retainAll(positives);
-
-        //The amount of positive instances is the size of the list that has only positives retained.
-        int p = indices.size();
-
-        //TODO see if we can also add unknown cases.
-        return new ConfusionMatrix(p, coverage - p, 0, 0, dataset.getP(), dataset.getN());
-    }
-
-    public double evaluateQuality(AbstractQualityMeasure qualityMeasure, Dataset dataset) {
-        //Get the confusion matrix.
-        this.confusionMatrix = getConfusionMatrix(dataset);
-
-        //Evaluate the confusion matrix with the quality measure.
-        this.evaluation = qualityMeasure.evaluate(confusionMatrix.p, confusionMatrix.n, confusionMatrix.P, confusionMatrix.N);
-
-        return evaluation;
     }
 }

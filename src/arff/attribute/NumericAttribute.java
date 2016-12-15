@@ -47,7 +47,7 @@ public class NumericAttribute extends AbstractAttribute<Double> {
      */
     @Override
     public Comparison[] getComparisons() {
-        return new Comparison[]{Comparison.EQ, Comparison.NEQ, Comparison.LTEQ, Comparison.GTEQ};
+        return new Comparison[]{/*Comparison.EQ, Comparison.NEQ,*/ Comparison.LTEQ, Comparison.GTEQ};
     }
 
     /**
@@ -99,14 +99,18 @@ public class NumericAttribute extends AbstractAttribute<Double> {
         };
     }
 
-    /**
-     * Whether the instance matches the target value.
-     *
-     * @param instance The instance that has to be checked.
-     * @return Whether the instance target value matches the overall target value.
-     */
     @Override
-    public boolean matchesTargetValue(Instance instance) {
-        return getTargetValue() == instance.getTargetValue();
+    public boolean contains(Constraint<Double> constraint, Instance instance) {
+        switch (constraint.getComparison()) {
+            case EQ:
+                return instance.getValue(this) == constraint.getValue();
+            case NEQ:
+                return instance.getValue(this) != constraint.getValue();
+            case LTEQ:
+                return (double) instance.getValue(this) <= constraint.getValue();
+            case GTEQ:
+                return (double) instance.getValue(this) >= constraint.getValue();
+        }
+        return false;
     }
 }

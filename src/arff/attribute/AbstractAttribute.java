@@ -6,6 +6,7 @@ import group.Comparison;
 import search.result.ConfusionMatrix;
 import util.SieveOfAtkin;
 
+import javax.xml.crypto.Data;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,9 +24,6 @@ public abstract class AbstractAttribute<T> {
     //The id of the attribute.
     private final int id;
 
-    //The comparator used to find positive results.
-    private Constraint<T> constraint;
-
     //The list of confusion matrices.
     private final HashMap<Long, ConfusionMatrix> constraintToConfusionMatrix = new HashMap<>();
 
@@ -34,6 +32,9 @@ public abstract class AbstractAttribute<T> {
 
     //The list of constraints.
     private final ArrayList<Constraint<T>> constraints = new ArrayList<>();
+
+    //Mapping from string representation to constraint value.
+    private final HashMap<String, Constraint<T>> stringToConstraint = new HashMap<>();
 
     //Sorted indices of the instances.
     private final ArrayList<Integer> sortedIndices = new ArrayList<>();
@@ -121,7 +122,7 @@ public abstract class AbstractAttribute<T> {
 
         //Get the unique primes for the comparisons.
         HashMap<Comparison, Long> primeMap = new HashMap<>();
-        for(Comparison comparison : getComparisons()) {
+        for(Comparison comparison : new Comparison[]{Comparison.EQ, Comparison.NEQ, Comparison.GTEQ, Comparison.LTEQ}) {
             primeMap.put(comparison, SieveOfAtkin.getNextPrime());
         }
 
@@ -134,13 +135,24 @@ public abstract class AbstractAttribute<T> {
             for(Comparison comparison : value != null ? getComparisons() : new Comparison[]{Comparison.EQ}) {
                 Constraint<T> constraint = new Constraint<>(value, comparison, this, primeMap.get(comparison), prime);
                 constraints.add(constraint);
-
-                //Get the confusion matrix.
-                ConfusionMatrix confusionMatrix = calculateConfusionMatrix(constraint, dataset);
-
-                //Add the confusion matrix.
-                addConfusionMatrix(constraint, confusionMatrix);
+                stringToConstraint.put(constraint.toString(), constraint);
             }
+        }
+    }
+
+    /**
+     * Initializes the attribute information sources.
+     *
+     * @param dataset The dataset file.
+     */
+    public void initializeConfusionMatrices(Dataset dataset) {
+        //Create the constraints.
+        for(Constraint<T> constraint : constraints) {
+            //Get the confusion matrix.
+            ConfusionMatrix confusionMatrix = calculateConfusionMatrix(constraint, dataset);
+
+            //Add the confusion matrix.
+            addConfusionMatrix(constraint, confusionMatrix);
         }
     }
 
@@ -172,7 +184,7 @@ public abstract class AbstractAttribute<T> {
             Instance instance = instances.get(index);
 
             //If the value is positive increment, decrement otherwise.
-            if(targetAttribute.matchesTargetValue(instance)) {
+            if(targetAttribute.matchesTargetValue(instance, dataset)) {
                 p++;
             } else {
                 n++;
@@ -185,7 +197,7 @@ public abstract class AbstractAttribute<T> {
                 Instance instance = instances.get(i);
 
                 //If the value is positive increment, decrement otherwise.
-                if(targetAttribute.matchesTargetValue(instance)) {
+                if(targetAttribute.matchesTargetValue(instance, dataset)) {
                     up++;
                 } else {
                     un++;
@@ -195,6 +207,21 @@ public abstract class AbstractAttribute<T> {
 
         //Create the confusion matrix.
         return new ConfusionMatrix(p, n, up, un, dataset.getP(), dataset.getN());
+    }
+
+    /**
+     * Get the indices corresponding to the null case.
+     *
+     * @return The indices to the null case, empty if null is not present within the set.
+     */
+    public List<Integer> getNullIndices() {
+        Constraint<T> nullConstraint = stringToConstraint.get(name + " = null");
+        //No null cases, so return an empty list.
+        if(nullConstraint == null) {
+            return new ArrayList<>();
+        } else {
+            return getIndicesSubsetForValue(nullConstraint);
+        }
     }
 
     /**
@@ -238,12 +265,12 @@ public abstract class AbstractAttribute<T> {
                     //if we are violating the range check, create an empty array.
                     indices = new ArrayList<>();
                 } else {
-                    indices = new ArrayList<>(sortedIndices.subList(0, indexStart - 1));
+                    indices = sortedIndices.subList(0, indexStart);
                 }
 
                 //Make certain that the indexEnd + 1 is within bounds.
                 if(indexEnd <= size - 1) {
-                    //Keep in mind that subList outer limit is non-inclusive!
+                    //Index end is already +1, so don't do it here!
                     indices.addAll(sortedIndices.subList(indexEnd, size));
                 }
                 break;
@@ -253,7 +280,7 @@ public abstract class AbstractAttribute<T> {
                 break;
             case GTEQ:
                 //Check the range from index start to list size.
-                indices = sortedIndices.subList(indexStart, size);
+                indices = sortedIndices.subList(indexStart, nullStartIndex == -1 ? size : nullStartIndex);
                 break;
         }
         return indices;
@@ -308,6 +335,16 @@ public abstract class AbstractAttribute<T> {
      */
     public ArrayList<Constraint<T>> getConstraints() {
         return constraints;
+    }
+
+    /**
+     * Get the constraint based on its string version.
+     *
+     * @param name The string version of the constraint.
+     * @return The constraint that is connected to the name, if it exist. null otherwise.
+     */
+    public Constraint<T> getConstraint(String name) {
+        return stringToConstraint.get(name);
     }
 
     /**
@@ -401,43 +438,13 @@ public abstract class AbstractAttribute<T> {
     public abstract Comparator<Instance> getComparator();
 
     /**
-     * Get the target value.
-     *
-     * @return The target value.
-     */
-    public T getTargetValue() {
-        return constraint.getValue();
-    }
-
-    /**
      * Whether the instance matches the target value.
      *
      * @param instance The instance that has to be checked.
      * @return Whether the instance target value matches the overall target value.
      */
-    public abstract boolean matchesTargetValue(Instance instance);
-
-    /**
-     * Set the target constraint.
-     *
-     * @param value The value of the constraint.
-     * @param comparison The comparison of the constraint.
-     */
-    public void setTargetConstraint(String value, Comparison comparison) {
-        for(Constraint<T> constraint : getConstraints()) {
-            if(constraint.getValue().equals(convertValue(value)) && constraint.getComparison() == comparison) {
-                this.constraint = constraint;
-            }
-        }
-        throw new IllegalArgumentException("No constraint exists for the value and comparison combination.");
-    }
-
-    /**
-     * Get the target constraint.
-     * @return The target constraint.
-     */
-    public Constraint<T> getTargetConstraint() {
-        return constraint;
+    public boolean matchesTargetValue(Instance instance, Dataset dataset) {
+        return dataset.getTargetConstraint().contains(instance);
     }
 
     /**
@@ -448,4 +455,6 @@ public abstract class AbstractAttribute<T> {
     public long getPrime() {
         return prime;
     }
+
+    public abstract boolean contains(Constraint<T> constraint, Instance instance);
 }
