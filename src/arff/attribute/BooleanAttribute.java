@@ -102,11 +102,16 @@ public class BooleanAttribute extends AbstractAttribute<Boolean> {
 
     @Override
     public boolean contains(Constraint<Boolean> constraint, Instance instance) {
+        return contains(constraint, (Boolean) instance.getValue(this));
+    }
+
+    @Override
+    public boolean contains(Constraint<Boolean> constraint, Boolean value) {
         switch (constraint.getComparison()) {
             case EQ:
-                return instance.getValue(this) == constraint.getValue();
+                return value == constraint.getValue();
             case NEQ:
-                return instance.getValue(this) != constraint.getValue();
+                return value != constraint.getValue();
         }
         return false;
     }

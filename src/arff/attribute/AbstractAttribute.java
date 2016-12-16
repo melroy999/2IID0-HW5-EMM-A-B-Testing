@@ -310,13 +310,22 @@ public abstract class AbstractAttribute<T> {
                 indices.addAll(sortedIndices.subList(0, indexEnd));
 
                 //When null has to be counted as 0.
-                if(countNullAsZero && getType() == Type.NUMERIC && nullStartIndex != -1/* && ((Constraint<Double>) constraint).getValue() >= 0*/) {
-                    indices.addAll(sortedIndices.subList(nullStartIndex, size));
+                if(countNullAsZero && nullStartIndex != -1 && getType() == Type.NUMERIC) {
+                    if(this instanceof NumericAttribute && ((NumericAttribute) this).contains((Constraint<Double>) constraint, 0.0)) {
+                        indices.addAll(sortedIndices.subList(nullStartIndex, size));
+                    }
                 }
                 break;
             case GTEQ:
                 //Check the range from index start to list size.
                 indices.addAll(sortedIndices.subList(indexStart, nullStartIndex == -1 ? size : nullStartIndex));
+
+                //When null has to be counted as 0.
+                if(countNullAsZero && nullStartIndex != -1 && getType() == Type.NUMERIC) {
+                    if(this instanceof NumericAttribute && ((NumericAttribute) this).contains((Constraint<Double>) constraint, 0.0)) {
+                        indices.addAll(sortedIndices.subList(nullStartIndex, size));
+                    }
+                }
                 break;
         }
         return indices;
@@ -506,4 +515,6 @@ public abstract class AbstractAttribute<T> {
     }
 
     public abstract boolean contains(Constraint<T> constraint, Instance instance);
+
+    public abstract boolean contains(Constraint<T> constraint, T value);
 }

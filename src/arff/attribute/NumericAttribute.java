@@ -4,6 +4,7 @@ import arff.instance.Instance;
 import group.Comparison;
 
 import java.util.Comparator;
+import java.util.Objects;
 
 /**
  * Representation of the numeric attribute.
@@ -101,15 +102,20 @@ public class NumericAttribute extends AbstractAttribute<Double> {
 
     @Override
     public boolean contains(Constraint<Double> constraint, Instance instance) {
+        return contains(constraint, (Double) instance.getValue(this));
+    }
+
+    @Override
+    public boolean contains(Constraint<Double> constraint, Double value) {
         switch (constraint.getComparison()) {
             case EQ:
-                return instance.getValue(this) == constraint.getValue();
+                return value.equals(constraint.getValue());
             case NEQ:
-                return instance.getValue(this) != constraint.getValue();
+                return !value.equals(constraint.getValue());
             case LTEQ:
-                return (double) instance.getValue(this) <= constraint.getValue();
+                return value <= constraint.getValue();
             case GTEQ:
-                return (double) instance.getValue(this) >= constraint.getValue();
+                return value >= constraint.getValue();
         }
         return false;
     }

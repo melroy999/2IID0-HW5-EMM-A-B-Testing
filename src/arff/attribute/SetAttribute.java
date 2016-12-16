@@ -106,11 +106,16 @@ public class SetAttribute extends AbstractAttribute<String> {
 
     @Override
     public boolean contains(Constraint<String> constraint, Instance instance) {
+        return contains(constraint, (String) instance.getValue(this));
+    }
+
+    @Override
+    public boolean contains(Constraint<String> constraint, String value) {
         switch (constraint.getComparison()) {
             case EQ:
-                return instance.getValue(this).equals(constraint.getValue());
+                return value.equals(constraint.getValue());
             case NEQ:
-                return !instance.getValue(this).equals(constraint.getValue());
+                return !value.equals(constraint.getValue());
         }
         return false;
     }
