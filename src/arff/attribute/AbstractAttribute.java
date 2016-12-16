@@ -59,6 +59,9 @@ public abstract class AbstractAttribute<T> {
     //The size of the sample.
     private int size;
 
+    //Whether we want to count null values as zero.
+    private boolean countNullAsZero;
+
     /**
      * Create an attribute.
      *
@@ -69,6 +72,24 @@ public abstract class AbstractAttribute<T> {
         this.name = name;
         this.id = id;
         this.prime = SieveOfAtkin.getNextPrime();
+    }
+
+    /**
+     * Whether we count numerical nulls as the value zero.
+     *
+     * @return Whether we count numerical nulls as the value zero.
+     */
+    public boolean isCountNullAsZero() {
+        return countNullAsZero;
+    }
+
+    /**
+     * Set whether we count numerical nulls as the value zero.
+     *
+     * @param countNullAsZero Whether we count numerical nulls as the value zero.
+     */
+    public void setCountNullAsZero(boolean countNullAsZero) {
+        this.countNullAsZero = countNullAsZero;
     }
 
     /**
@@ -287,6 +308,11 @@ public abstract class AbstractAttribute<T> {
             case LTEQ:
                 //Check the range from 0 to index end.
                 indices.addAll(sortedIndices.subList(0, indexEnd));
+
+                //When null has to be counted as 0.
+                if(countNullAsZero && getType() == Type.NUMERIC && nullStartIndex != -1/* && ((Constraint<Double>) constraint).getValue() >= 0*/) {
+                    indices.addAll(sortedIndices.subList(nullStartIndex, size));
+                }
                 break;
             case GTEQ:
                 //Check the range from index start to list size.
@@ -417,10 +443,11 @@ public abstract class AbstractAttribute<T> {
      *
      * @param line The line to parse.
      * @param id The id to give the attribute.
+     * @param countNullAsZero Whether we count null values as zero in numerical cases.
      * @return An attribute object corresponding to the given line.
      * @throws Exception Throws an exception if no attributes can be found in the given line.
      */
-    public static AbstractAttribute getAttribute(String line, int id) throws Exception {
+    public static AbstractAttribute getAttribute(String line, int id, boolean countNullAsZero) throws Exception {
         //Get the pattern matches.
         Matcher matches = ATTRIBUTE_MATCH_PATTERN.matcher(line);
 
@@ -443,7 +470,9 @@ public abstract class AbstractAttribute<T> {
             case BOOLEAN:
                 return new BooleanAttribute(name, id);
             case NUMERIC:
-                return new NumericAttribute(name, id);
+                NumericAttribute attribute = new NumericAttribute(name, id);
+                attribute.setCountNullAsZero(countNullAsZero);
+                return attribute;
             case SET:
                 return new SetAttribute(name, id, value);
         }

@@ -123,10 +123,11 @@ public class Dataset {
      * Read the given arff file, and convert it to an object.
      *
      * @param filePath The path to the file we want to load.
+     * @param countNullAsZero Whether we count null values as zero in numerical cases.
      * @return The arff file as an object.
      * @throws Exception Throws an exception if the file cannot be loaded.
      */
-    public static Dataset loadARFF(String filePath) throws Exception {
+    public static Dataset loadARFF(String filePath, boolean countNullAsZero) throws Exception {
         lines.clear();
         lines.addAll(FileLoader.readAllLines(filePath));
 
@@ -138,7 +139,7 @@ public class Dataset {
         int instanceCounter = 0;
         for(String line : lines) {
             if(line.startsWith("@attribute")) {
-                attributes.add(AbstractAttribute.getAttribute(line, attributeCounter++));
+                attributes.add(AbstractAttribute.getAttribute(line, attributeCounter++, countNullAsZero));
             } else if(line.startsWith("@relation")) {
                 relation = line.replaceFirst("@relation ","").replaceAll("'","");
             } else if(line.contains(",")) {

@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 
-public class Main {
+public class Core {
     private static final int DECIMAL_PLACES = 6;
     private static int SEARCH_DEPTH = 1;
     private static int SEARCH_WIDTH = 10;
@@ -28,9 +28,13 @@ public class Main {
     private static AbstractRefinementOperator REFINEMENT_OPERATOR = new QualityRefinementOperator();
     private static AbstractQualityMeasure QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
     private static boolean printCSVFormat = false;
+    private static boolean countNullAsZero = false;
 
     public static void main(String[] args) {
         SieveOfAtkin.resetCounter();
+
+        //Set default values.
+        restoreDefaults();
 
         if(args.length == 0) {
             //Set the default values.
@@ -42,6 +46,7 @@ public class Main {
             REFINEMENT_OPERATOR = new QualityRefinementOperator();
             QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
             BLACKLIST = new String[]{"decision","decision_o"};
+            countNullAsZero = false;
         } else {
             System.out.println("Arguments: " + Arrays.toString(args));
             for(int i = 0; i < args.length; i++) {
@@ -54,6 +59,8 @@ public class Main {
                         USE_THREADS = true;
                     } else if(v.equalsIgnoreCase("csv")) {
                         printCSVFormat = true;
+                    } else if(v.equalsIgnoreCase("null-is-zero")) {
+                        countNullAsZero = true;
                     } else {
                         //Get the next value.
                         //Increment i as well.
@@ -112,7 +119,7 @@ public class Main {
 
         System.out.println("Taking values SEARCH_DEPTH = " + SEARCH_DEPTH + ", SEARCH_WIDTH = " + SEARCH_WIDTH + ", RESULT_SET_LENGTH = " + RESULT_SET_LENGTH + ", MINIMUM_GROUP_SIZE = " + MINIMUM_GROUP_SIZE + ", MAXIMUM_FRACTION = " + MAXIMUM_FRACTION + ", USE_THREADS = " + USE_THREADS + ".");
         try {
-            Dataset dataset = Dataset.loadARFF("/dataset.arff");
+            Dataset dataset = Dataset.loadARFF("/dataset.arff", countNullAsZero);
             System.out.println("P=" + dataset.getP() + ", N=" + dataset.getN() + ", P+N=" + (dataset.getP() + dataset.getN()) + ", Number of instances: " + dataset.getInstances().size());
 
             HashSet<String> blacklist = new HashSet<>();
@@ -172,5 +179,17 @@ public class Main {
         System.out.println();
     }
 
-
+    private static void restoreDefaults() {
+        SEARCH_DEPTH = 1;
+        SEARCH_WIDTH = 10;
+        RESULT_SET_LENGTH = 100;
+        MINIMUM_GROUP_SIZE = 2;
+        MAXIMUM_FRACTION = 1.0;
+        BLACKLIST = new String[]{};
+        USE_THREADS = false;
+        REFINEMENT_OPERATOR = new QualityRefinementOperator();
+        QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
+        printCSVFormat = false;
+        countNullAsZero = false;
+    }
 }

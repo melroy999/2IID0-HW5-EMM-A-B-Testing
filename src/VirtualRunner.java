@@ -6,8 +6,8 @@ public class VirtualRunner {
         String[] minQuality = new String[]{"0.9"};
 
         for(int i = 0; i < evaluators.length; i++) {
-            String[] arguments = new String[]{"-quality-measure", evaluators[i], minQuality[i], "-blacklist", "decision,decision_o", "-t", "-d", "1", "-w", "20", "-set-length", "20"};
-            Main.main(arguments);
+            String[] arguments = new String[]{"-quality-measure", evaluators[i], minQuality[i], "-blacklist", "decision,decision_o", "-t", "-d", "1", "-w", "20", "-set-length", "20","-null-is-zero"};
+            Core.main(arguments);
         }
     }
 }

@@ -168,10 +168,6 @@ public class BeamSearch {
                         //Add it to the result set.
                         boolean succesfull = resultSet.add(group);
 
-                        if(quality == 1.0d) {
-                            System.out.println(group + ", " + succesfull);
-                        }
-
                         //Insert it into the beam.
                         beam.add(group);
                     }
