@@ -25,4 +25,14 @@ public class WeightedRelativeAccuracyQualityMeasure extends AbstractQualityMeasu
     public double evaluate(double p, double n, double P, double N) {
         return ((p + n) / (P + N)) * (p / (p + n) - P / (P + N));
     }
+
+    @Override
+    public String getFormula() {
+        return "((p + n) / (P + N)) * (p / (p + n) - P / (P + N))";
+    }
+
+    @Override
+    public String getName() {
+        return "Weighted Relative Accuracy";
+    }
 }

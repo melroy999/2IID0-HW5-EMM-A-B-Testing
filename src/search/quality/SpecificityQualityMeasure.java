@@ -25,4 +25,14 @@ public class SpecificityQualityMeasure extends AbstractQualityMeasure {
     public double evaluate(double p, double n, double P, double N) {
         return 1 - n / N;
     }
+
+    @Override
+    public String getFormula() {
+        return "1 - n / N";
+    }
+
+    @Override
+    public String getName() {
+        return "Specificity";
+    }
 }

@@ -7,7 +7,6 @@ import group.Group;
 import search.quality.AbstractQualityMeasure;
 import search.refinement.AbstractRefinementOperator;
 import util.GroupPriorityQueue;
-import util.Util;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -59,7 +58,7 @@ public class BeamSearch {
 
         //Iterate for all levels.
         for(int level = 1; level <= d; level++) {
-            System.out.println(Util.getCurrentTimeStamp() + " >>> Entering level " + level);
+            System.out.println("Entering level " + level);
 
             //Create the beam, which has a maximum amount of w entries.
             GroupPriorityQueue beam = new GroupPriorityQueue(w);
@@ -75,8 +74,8 @@ public class BeamSearch {
                 //The null seeds.
                 Set<Integer> seedNullIndices = seed.getNullIndicesSubset();
 
-                System.out.println(Util.getCurrentTimeStamp() + " >>> >>> Evaluating seed " + seed);
-                System.out.println(Util.getCurrentTimeStamp() + " >>> >>> ConfusionTable: " + seed.getConfusionMatrix());
+                System.out.println("\tEvaluating seed " + seed);
+                //System.out.println("\t\tConfusionTable: " + seed.getConfusionMatrix());
 
                 //Get the candidate subgroups from the seed.
                 Set<Group> groups = refinementOperator.generate(seed, dataset, qualityMeasure, encounteredGroups, blacklist);

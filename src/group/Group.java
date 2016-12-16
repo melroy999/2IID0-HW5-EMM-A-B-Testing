@@ -316,11 +316,8 @@ public class Group implements Comparable<Group> {
 
     @Override
     public String toString() {
-        return "Group{" +
-                "constraints=" + getReadableConstraints() +
-                ", product=" + product +
-                ", evaluation=" + evaluation +
-                '}';
+        return getReadableConstraints() +
+                ", evaluation: " + evaluation;
     }
 
     public String getReadableConstraints() {

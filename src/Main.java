@@ -1,77 +1,131 @@
 import arff.Dataset;
 import group.Group;
 import search.BeamSearch;
-import search.quality.SensitivityQualityMeasure;
-import search.quality.SpecificityQualityMeasure;
-import search.quality.WeightedRelativeAccuracyQualityMeasure;
-import search.quality.X2QualityMeasure;
+import search.quality.*;
 import search.refinement.AbstractRefinementOperator;
 import search.refinement.QualityRefinementOperator;
 import search.refinement.SimpleRefinementOperator;
 import util.GroupPriorityQueue;
 import util.Util;
 
+import javax.swing.*;
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 
 public class Main {
     private static final int DECIMAL_PLACES = 6;
-    private static int SEARCH_DEPTH = 2;
-    private static int SEARCH_WIDTH = 25;
+    private static int SEARCH_DEPTH = 1;
+    private static int SEARCH_WIDTH = 10;
     private static int RESULT_SET_LENGTH = 100;
-    private static int MINIMUM_GROUP_SIZE = 1000;
-    private static double MINIMUM_QUALITY = 0.05;
-    private static double MAXIMUM_FRACTION = 0.9;
+    private static int MINIMUM_GROUP_SIZE = 2;
+    private static double MAXIMUM_FRACTION = 1.0;
+    private static String[] BLACKLIST = new String[]{};
+    private static boolean USE_THREADS = false;
+    private static AbstractRefinementOperator REFINEMENT_OPERATOR = new QualityRefinementOperator();
+    private static AbstractQualityMeasure QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
 
     public static void main(String[] args) {
-        AbstractRefinementOperator operator = new QualityRefinementOperator();
-
-        if(args.length < 4) {
-            System.out.println("Taking default values SEARCH_DEPTH = " + SEARCH_DEPTH + ", SEARCH_WIDTH = " + SEARCH_WIDTH + ", MINIMUM_GROUP_SIZE = " + MINIMUM_GROUP_SIZE + ", MAXIMUM_FRACTION = " + MAXIMUM_FRACTION + ".");
+        if(args.length == 0) {
+            //Set the default values.
+            USE_THREADS = true;
+            MAXIMUM_FRACTION = 0.9;
+            MINIMUM_GROUP_SIZE = 1000;
+            SEARCH_DEPTH = 2;
+            SEARCH_WIDTH = 25;
+            REFINEMENT_OPERATOR = new QualityRefinementOperator();
+            QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
+            BLACKLIST = new String[]{"decision","decision_o"};
         } else {
-            SEARCH_DEPTH = Integer.valueOf(args[0]);
-            SEARCH_WIDTH = Integer.valueOf(args[1]);
-            MINIMUM_GROUP_SIZE = Integer.valueOf(args[2]);
-            MAXIMUM_FRACTION = Integer.valueOf(args[3]);
-            System.out.println("Taking values SEARCH_DEPTH = " + SEARCH_DEPTH + ", SEARCH_WIDTH = " + SEARCH_WIDTH + ", MINIMUM_GROUP_SIZE = " + MINIMUM_GROUP_SIZE + ", MAXIMUM_FRACTION = " + MAXIMUM_FRACTION + ".");
+            System.out.println("Arguments: " + Arrays.toString(args));
+            for(int i = 0; i < args.length; i++) {
+                String arg = args[i];
+                if(arg.startsWith("-")) {
+                    //Find the value we want to set.
+                    String v = arg.replaceFirst("-", "");
+
+                    if(v.equalsIgnoreCase("T")) {
+                        USE_THREADS = true;
+                    } else {
+                        //Get the next value.
+                        //Increment i as well.
+                        String value = args[i + 1].toLowerCase();
+                        i++;
+
+                        switch (v) {
+                            case "d":
+                                SEARCH_DEPTH = Integer.valueOf(value);
+                                break;
+                            case "w":
+                                SEARCH_WIDTH = Integer.valueOf(value);
+                                break;
+                            case "set-length":
+                                RESULT_SET_LENGTH = Integer.valueOf(value);
+                                break;
+                            case "min-group-size":
+                                MINIMUM_GROUP_SIZE = Integer.valueOf(value);
+                                break;
+                            case "max-group-size-fraction":
+                                MAXIMUM_FRACTION = Double.valueOf(value);
+                                break;
+                            case "blacklist":
+                                BLACKLIST = value.split(",");
+                                break;
+                            case "refinement-REFINEMENT_OPERATOR":
+                                switch (value) {
+                                    case "sro": REFINEMENT_OPERATOR = new SimpleRefinementOperator();
+                                        break;
+                                    case "qro": REFINEMENT_OPERATOR = new QualityRefinementOperator();
+                                        break;
+                                }
+                                break;
+                            case "quality-measure":
+                                //We have another value for the quality measure.
+                                double minQuality = Double.valueOf(args[i + 1].toLowerCase());
+
+                                switch (value) {
+                                    case "wra": QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(minQuality);
+                                        break;
+                                    case "sen": QUALITY_MEASURE = new SensitivityQualityMeasure(minQuality);
+                                        break;
+                                    case "spec": QUALITY_MEASURE = new SpecificityQualityMeasure(minQuality);
+                                        break;
+                                    case "x2": QUALITY_MEASURE = new X2QualityMeasure(minQuality);
+                                        break;
+                                }
+
+                                i++;
+                                break;
+                        }
+                    }
+                }
+            }
         }
 
+        System.out.println("Taking values SEARCH_DEPTH = " + SEARCH_DEPTH + ", SEARCH_WIDTH = " + SEARCH_WIDTH + ", RESULT_SET_LENGTH = " + RESULT_SET_LENGTH + ", MINIMUM_GROUP_SIZE = " + MINIMUM_GROUP_SIZE + ", MAXIMUM_FRACTION = " + MAXIMUM_FRACTION + ", USE_THREADS = " + USE_THREADS + ".");
         try {
             Dataset dataset = Dataset.loadARFF("/dataset.arff");
             System.out.println("P=" + dataset.getP() + ", N=" + dataset.getN() + ", P+N=" + (dataset.getP() + dataset.getN()) + ", Number of instances: " + dataset.getInstances().size());
 
             HashSet<String> blacklist = new HashSet<>();
-            blacklist.add("decision");
-            blacklist.add("decision_o");
+            blacklist.addAll(Arrays.asList(BLACKLIST));
 
-            System.out.println("= Weighted relative accuracy ===============================================================================");
-            System.out.println("Heuristic: ((p + n) / (P + N)) * (p / (p + n) - P / (P + N))");
+            System.out.println("Blacklisted attributes: " + Arrays.toString(BLACKLIST).replaceAll("(\\{|\\})",""));
+            System.out.println();
+
+            System.out.println("=======================================================================================================================================");
+            System.out.println("Quality measure:\t\t\t [" + QUALITY_MEASURE.getName() + "] with minimum quality value " + QUALITY_MEASURE.getMinimumValue());
+            System.out.println("Quality measure formula:\t " + QUALITY_MEASURE.getFormula());
+            System.out.println("Refinement Operator:\t\t [" + REFINEMENT_OPERATOR.getName() + "]");
+            System.out.println();
             Date start = new Date();
-            GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, true).search(dataset, new WeightedRelativeAccuracyQualityMeasure(0.02), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
+            GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, USE_THREADS).search(dataset, QUALITY_MEASURE, REFINEMENT_OPERATOR, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
             Date end = new Date();
             printQueue(queue, start, end);
+            System.out.println("=======================================================================================================================================");
 
-            System.out.println("= Sensitivity quality measure ==============================================================================");
-            System.out.println("Heuristic: p / P");
-            start = new Date();
-            queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, true).search(dataset, new SensitivityQualityMeasure(0.5), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
-            end = new Date();
-            printQueue(queue, start, end);
-
-            System.out.println("= Specificity quality measure ==============================================================================");
-            System.out.println("Heuristic: 1 - n / N");
-            start = new Date();
-            queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, true).search(dataset, new SpecificityQualityMeasure(0.5), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
-            end = new Date();
-            printQueue(queue, start, end);
-
-            System.out.println("= x2 =======================================================================================================");
-            System.out.println("Heuristic: (((p * N - P * n) * (p * N - P * n)) / (P + N)) * ((P + N) * (P + N) / (P * N * (p + n) * (P + N - p - n)))");
-            start = new Date();
-            queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, true).search(dataset, new X2QualityMeasure(500), operator, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
-            end = new Date();
-            printQueue(queue, start, end);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -79,12 +133,18 @@ public class Main {
 
     private static void printQueue(GroupPriorityQueue queue, Date start, Date end) {
         System.out.println();
+        System.out.println("Resulting subgroups: ");
+        int i = 1;
         for(Group group : queue) {
-            System.out.println(Util.getCurrentTimeStamp() + " (id: " + group.getProduct() + ")(eval: " + group.getEvaluation() + ") " + group.getReadableConstraints());
-            System.out.println(Util.getCurrentTimeStamp() + " " + group.getConfusionMatrix());
+            System.out.println(i + ". (id: " + group.getProduct() + ") " + group);
+            System.out.println(" \t" + group.getConfusionMatrix());
+            i++;
         }
-        System.out.println("Starting time: " + new SimpleDateFormat("[HH:mm:ss.SSS]").format(start));
-        System.out.println("Ending time: " + new SimpleDateFormat("[HH:mm:ss.SSS]").format(end));
+        System.out.println();
+        System.out.println("Starting time: \t" + new SimpleDateFormat("[HH:mm:ss.SSS]").format(start));
+        System.out.println("Ending time: \t" + new SimpleDateFormat("[HH:mm:ss.SSS]").format(end));
         System.out.println();
     }
+
+
 }

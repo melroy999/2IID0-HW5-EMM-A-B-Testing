@@ -45,4 +45,9 @@ public class QualityRefinementOperator extends AbstractRefinementOperator {
 
         return groups;
     }
+
+    @Override
+    public String getName() {
+        return "Quality Refinement";
+    }
 }

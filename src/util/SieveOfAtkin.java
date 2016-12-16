@@ -29,7 +29,8 @@ public class SieveOfAtkin {
      * @return List of integer primes.
      */
     private static List<Integer> getPrimes(int limit) {
-        System.out.println(Util.getCurrentTimeStamp() + " >>> Creating prime table for all values < " + limit + ".");
+        System.out.println("Initializing prime generation.");
+        System.out.println("\tCreating prime table for all values < " + limit + ".");
 
         //Initialize the sieve.
         boolean[] isPrime = new boolean[limit + 1];
@@ -74,7 +75,7 @@ public class SieveOfAtkin {
             }
         }
 
-        System.out.println(Util.getCurrentTimeStamp() +  " >>> Prime table creation finished, generated " + primes.size() + " primes.");
+        System.out.println("\tPrime table creation finished, generated " + primes.size() + " primes.");
 
         return primes;
     }

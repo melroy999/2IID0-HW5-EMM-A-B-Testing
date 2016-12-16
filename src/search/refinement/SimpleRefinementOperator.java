@@ -37,4 +37,9 @@ public class SimpleRefinementOperator extends AbstractRefinementOperator {
 
         return groups;
     }
+
+    @Override
+    public String getName() {
+        return "Simple Refinement";
+    }
 }

@@ -25,4 +25,14 @@ public class SensitivityQualityMeasure extends AbstractQualityMeasure {
     public double evaluate(double p, double n, double P, double N) {
         return p / P;
     }
+
+    @Override
+    public String getFormula() {
+        return "p / P";
+    }
+
+    @Override
+    public String getName() {
+        return "Sensitivity";
+    }
 }

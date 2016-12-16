@@ -25,4 +25,14 @@ public class X2QualityMeasure extends AbstractQualityMeasure {
     public double evaluate(double p, double n, double P, double N) {
         return (((p * N - P * n) * (p * N - P * n)) / (P + N)) * (((P + N) * (P + N)) / (P * N * (p + n) * (P + N - p - n)));
     }
+
+    @Override
+    public String getFormula() {
+        return "(((p * N - P * n) * (p * N - P * n)) / (P + N)) * (((P + N) * (P + N)) / (P * N * (p + n) * (P + N - p - n)))";
+    }
+
+    @Override
+    public String getName() {
+        return "χ2 statistic";
+    }
 }

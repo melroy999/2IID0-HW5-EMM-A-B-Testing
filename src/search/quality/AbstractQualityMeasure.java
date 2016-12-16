@@ -24,4 +24,7 @@ public abstract class AbstractQualityMeasure {
      * @return The search.result calculated by the heuristic.
      */
     public abstract double evaluate(double p, double n, double P, double N);
+
+    public abstract String getFormula();
+    public abstract String getName();
 }
