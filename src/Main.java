@@ -27,6 +27,7 @@ public class Main {
     private static boolean USE_THREADS = false;
     private static AbstractRefinementOperator REFINEMENT_OPERATOR = new QualityRefinementOperator();
     private static AbstractQualityMeasure QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
+    private static boolean printCSVFormat = false;
 
     public static void main(String[] args) {
         SieveOfAtkin.resetCounter();
@@ -51,6 +52,8 @@ public class Main {
 
                     if(v.equalsIgnoreCase("T")) {
                         USE_THREADS = true;
+                    } else if(v.equalsIgnoreCase("csv")) {
+                        printCSVFormat = true;
                     } else {
                         //Get the next value.
                         //Increment i as well.
@@ -126,7 +129,12 @@ public class Main {
             Date start = new Date();
             GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, USE_THREADS).search(dataset, QUALITY_MEASURE, REFINEMENT_OPERATOR, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
             Date end = new Date();
-            printQueue(queue, start, end);
+
+            if(printCSVFormat) {
+                printQueueCSV(queue, start, end);
+            } else {
+                printQueue(queue, start, end);
+            }
             System.out.println("=======================================================================================================================================");
 
         } catch (Exception e) {
@@ -141,6 +149,21 @@ public class Main {
         for(Group group : queue) {
             System.out.println(i + ". (id: " + group.getProduct() + ") " + group);
             System.out.println(" \t" + group.getConfusionMatrix());
+            i++;
+        }
+        System.out.println();
+        System.out.println("Starting time: \t" + new SimpleDateFormat("[HH:mm:ss.SSS]").format(start));
+        System.out.println("Ending time: \t" + new SimpleDateFormat("[HH:mm:ss.SSS]").format(end));
+        System.out.println();
+    }
+
+    private static void printQueueCSV(GroupPriorityQueue queue, Date start, Date end) {
+        System.out.println();
+        System.out.println("Resulting table: ");
+        System.out.println("Nr.;Depth;Coverage;Quality;Positives;Conditions;");
+        int i = 1;
+        for(Group group : queue) {
+            System.out.println(i + ";" + group.getConstraints().size() + ";" + group.getConfusionMatrix().getCoverage() + ";" + group.getEvaluation() + ";" + group.getConfusionMatrix().p + ";" + group.getReadableConstraints() + ";");
             i++;
         }
         System.out.println();

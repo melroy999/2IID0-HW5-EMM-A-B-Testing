@@ -316,7 +316,15 @@ public class Group implements Comparable<Group> {
     @Override
     public int compareTo(Group o) {
         //Take the inverse, as we want higher values at the top.
-        return -Double.compare(this.getEvaluation(), o.getEvaluation());
+        int eval = -Double.compare(this.getEvaluation(), o.getEvaluation());
+
+        //If they are equal, we also have to consider the contents...
+        if(eval == 0) {
+            //Compare the products, as they should be unique.
+            return this.product.compareTo(o.getProduct());
+        } else {
+            return eval;
+        }
     }
 
     @Override

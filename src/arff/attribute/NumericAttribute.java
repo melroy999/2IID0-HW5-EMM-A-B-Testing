@@ -47,7 +47,7 @@ public class NumericAttribute extends AbstractAttribute<Double> {
      */
     @Override
     public Comparison[] getComparisons() {
-        return new Comparison[]{/*Comparison.EQ, Comparison.NEQ,*/ Comparison.LTEQ, Comparison.GTEQ};
+        return new Comparison[]{Comparison.EQ, /*Comparison.NEQ,*/ Comparison.LTEQ, Comparison.GTEQ};
     }
 
     /**

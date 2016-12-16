@@ -166,7 +166,11 @@ public class BeamSearch {
                     //If the group satisfies all constraints.
                     if(quality > qualityMeasure.getMinimumValue() && group.getConfusionMatrix().getCoverage() > minimumCoverage && group.getConfusionMatrix().getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
                         //Add it to the result set.
-                        resultSet.add(group);
+                        boolean succesfull = resultSet.add(group);
+
+                        if(quality == 1.0d) {
+                            System.out.println(group + ", " + succesfull);
+                        }
 
                         //Insert it into the beam.
                         beam.add(group);
