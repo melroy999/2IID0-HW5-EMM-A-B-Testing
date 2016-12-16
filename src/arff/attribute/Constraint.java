@@ -4,6 +4,7 @@ import arff.instance.Instance;
 import group.Comparison;
 import util.SieveOfAtkin;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -21,7 +22,7 @@ public class Constraint<T> {
     private final long comparisonPrime;
 
     //The product of the primes.
-    private final Long product;
+    private final BigInteger product;
 
     /**
      * Create a constraint on the attribute.
@@ -40,7 +41,7 @@ public class Constraint<T> {
         this.valuePrime = valuePrime;
         this.comparisonPrime = comparisonPrime;
 
-        this.product = valuePrime * comparisonPrime;
+        this.product = BigInteger.valueOf(valuePrime * comparisonPrime);
     }
 
     /**
@@ -106,7 +107,7 @@ public class Constraint<T> {
      *
      * @return The product of the value and comparison primes.
      */
-    public Long getProduct() {
+    public BigInteger getProduct() {
         return product;
     }
 

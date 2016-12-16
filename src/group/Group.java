@@ -7,6 +7,7 @@ import arff.instance.Instance;
 import search.quality.AbstractQualityMeasure;
 import search.result.ConfusionMatrix;
 
+import java.math.BigInteger;
 import java.util.*;
 
 public class Group implements Comparable<Group> {
@@ -14,7 +15,7 @@ public class Group implements Comparable<Group> {
     private final LinkedList<Constraint> constraints;
 
     //The product of all primes within the group.
-    private final long product;
+    private final BigInteger product;
 
     //The evaluation value of this group.
     private double evaluation;
@@ -29,7 +30,7 @@ public class Group implements Comparable<Group> {
         this.constraints = new LinkedList<>();
 
         //Calculate the product of the constraints' primes.
-        this.product = 1;
+        this.product = BigInteger.valueOf(1);
     }
 
     /**
@@ -39,7 +40,7 @@ public class Group implements Comparable<Group> {
      * @param group The group to extend.
      * @param extendedProduct The pre-calculated new product of the group.
      */
-    private Group(Constraint constraint, Group group, long extendedProduct) {
+    private Group(Constraint constraint, Group group, BigInteger extendedProduct) {
         this.constraints = new LinkedList<>(group.getConstraints());
         this.constraints.add(constraint);
 
@@ -62,7 +63,7 @@ public class Group implements Comparable<Group> {
      *
      * @return For all constraints in {@code constraints}, take the product of the connected prime.
      */
-    public long getProduct() {
+    public BigInteger getProduct() {
         return product;
     }
 
@@ -73,8 +74,8 @@ public class Group implements Comparable<Group> {
      * @param encounteredGroups The products of the groups we have already encountered.
      * @return A new group containing the constraint if that addition is valid, {@code null} otherwise.
      */
-    public Group extendGroupWith(Constraint constraint, HashSet<Long> encounteredGroups) {
-        long extendedProduct = this.product * constraint.getProduct();
+    public Group extendGroupWith(Constraint constraint, HashSet<BigInteger> encounteredGroups) {
+        BigInteger extendedProduct = this.product.multiply(constraint.getProduct());
 
         //Check whether the extension would be valid or not.
         if(isValidExtension(constraint, encounteredGroups, extendedProduct)) {
@@ -97,14 +98,18 @@ public class Group implements Comparable<Group> {
      * @param extendedProduct The pre-calculated new product of the extended group.
      * @return True if the group itself will not have the same constraint twice, and the resulting group has not been seen yet.
      */
-    private boolean isValidExtension(Constraint constraint, HashSet<Long> encounteredGroups, long extendedProduct) {
+    private boolean isValidExtension(Constraint constraint, HashSet<BigInteger> encounteredGroups, BigInteger extendedProduct) {
         //Return null if the group is invalid.
         // - Duplicate value, as having the same value with different comparators are not helpful.
         // - Duplicate comparator, as having two duplicate comparators will not provide improvements.
         // - No groups that have the same product.
 
         //If the group already contains the given constraint, we will have that product modulo constraint.prime is 0.
-        return !(encounteredGroups.contains(extendedProduct) || this.product % constraint.getValuePrime() == 0 || this.product % constraint.getComparisonPrime() == 0);
+        return !(
+                encounteredGroups.contains(extendedProduct) ||
+                        this.product.mod(BigInteger.valueOf(constraint.getValuePrime())).equals(BigInteger.ZERO) ||
+                        this.product.mod(BigInteger.valueOf(constraint.getComparisonPrime())).equals(BigInteger.ZERO)
+        );
     }
 
     /**

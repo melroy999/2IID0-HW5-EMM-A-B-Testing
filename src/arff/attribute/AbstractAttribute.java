@@ -8,6 +8,7 @@ import search.result.ConfusionMatrix;
 import util.SieveOfAtkin;
 
 import javax.xml.crypto.Data;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,10 +27,10 @@ public abstract class AbstractAttribute<T> {
     private final int id;
 
     //The list of confusion matrices.
-    private final HashMap<Long, ConfusionMatrix> constraintToConfusionMatrix = new HashMap<>();
+    private final HashMap<BigInteger, ConfusionMatrix> constraintToConfusionMatrix = new HashMap<>();
 
     //The list of constraint quality results.
-    private final HashMap<Long, Double> constraintToEvaluation = new HashMap<>();
+    private final HashMap<BigInteger, Double> constraintToEvaluation = new HashMap<>();
 
     //The list of unique values found.
     private final HashSet<T> values = new HashSet<>();

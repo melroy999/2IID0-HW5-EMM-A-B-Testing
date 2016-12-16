@@ -8,7 +8,7 @@ import java.util.List;
  */
 public class SieveOfAtkin {
     //A long list of primes.
-    private static final List<Integer> primes = getPrimes(25000000);
+    private static final List<Integer> primes = getPrimes(50000000);
 
     //The current prime number we are at.
     private static int counter = 0;
@@ -20,6 +20,10 @@ public class SieveOfAtkin {
      */
     public static Long getNextPrime() {
         return Long.valueOf(primes.get(counter++));
+    }
+
+    public static void resetCounter() {
+        counter = 0;
     }
 
     /**

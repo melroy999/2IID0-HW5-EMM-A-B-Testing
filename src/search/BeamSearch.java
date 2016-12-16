@@ -8,6 +8,7 @@ import search.quality.AbstractQualityMeasure;
 import search.refinement.AbstractRefinementOperator;
 import util.GroupPriorityQueue;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -45,7 +46,7 @@ public class BeamSearch {
         GroupPriorityQueue resultSet = new GroupPriorityQueue(resultSetSize);
 
         //A hashset that keeps the encountered group products.
-        HashSet<Long> encounteredGroups = new HashSet<>();
+        HashSet<BigInteger> encounteredGroups = new HashSet<>();
 
         //The target attribute.
         AbstractAttribute targetAttribute = dataset.getTargetAttribute();

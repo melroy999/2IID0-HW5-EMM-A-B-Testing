@@ -6,6 +6,7 @@ import search.refinement.AbstractRefinementOperator;
 import search.refinement.QualityRefinementOperator;
 import search.refinement.SimpleRefinementOperator;
 import util.GroupPriorityQueue;
+import util.SieveOfAtkin;
 import util.Util;
 
 import javax.swing.*;
@@ -28,6 +29,8 @@ public class Main {
     private static AbstractQualityMeasure QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
 
     public static void main(String[] args) {
+        SieveOfAtkin.resetCounter();
+
         if(args.length == 0) {
             //Set the default values.
             USE_THREADS = true;
