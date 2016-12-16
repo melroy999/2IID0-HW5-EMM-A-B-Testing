@@ -320,8 +320,16 @@ public class Group implements Comparable<Group> {
 
         //If they are equal, we also have to consider the contents...
         if(eval == 0) {
-            //Compare the products, as they should be unique.
-            return this.product.compareTo(o.getProduct());
+            //Sort on the size, make smaller sizes more important than larger constraints.
+            eval = Integer.compare(this.constraints.size(), o.constraints.size());
+
+            //If this is also equal... we will sort on product instead.
+            if(eval == 0) {
+                //Compare the products, as they should be unique.
+                return this.product.compareTo(o.getProduct());
+            } else {
+                return eval;
+            }
         } else {
             return eval;
         }
