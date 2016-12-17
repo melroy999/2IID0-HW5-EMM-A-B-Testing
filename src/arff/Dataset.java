@@ -124,10 +124,11 @@ public class Dataset {
      *
      * @param filePath The path to the file we want to load.
      * @param countNullAsZero Whether we count null values as zero in numerical cases.
+     * @param targetAttribute Name of the target attribute.
      * @return The arff file as an object.
      * @throws Exception Throws an exception if the file cannot be loaded.
      */
-    public static Dataset loadARFF(String filePath, boolean countNullAsZero) throws Exception {
+    public static Dataset loadARFF(String filePath, boolean countNullAsZero, String targetAttribute) throws Exception {
         lines.clear();
         lines.addAll(FileLoader.readAllLines(filePath));
 
@@ -147,7 +148,24 @@ public class Dataset {
             }
         }
 
-        return new Dataset(attributes, instances, relation, attributes.size() - 1, "1", Comparison.EQ);
+        //Set the temporary target attribute id.
+        int targetAttributeId = attributes.size() - 1;
+        boolean targetAttributeFound = false;
+        for(AbstractAttribute attribute : attributes) {
+            //Find a match to the target attribute.
+            if (attribute.getName().equals(targetAttribute)) {
+                targetAttributeFound = true;
+                targetAttributeId = attribute.getId();
+                break;
+            }
+        }
+
+        //Warn for default behavior.
+        if(!targetAttributeFound && !targetAttribute.equals("")) {
+            System.out.println(">>> WARNING: target attribute [" + targetAttribute + "] could not be found, taking last attribute on default.");
+        }
+
+        return new Dataset(attributes, instances, relation, targetAttributeId, "1", Comparison.EQ);
     }
 
     /**
