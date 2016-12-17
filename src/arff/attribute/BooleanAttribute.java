@@ -60,7 +60,7 @@ public class BooleanAttribute extends AbstractAttribute<Boolean> {
      */
     @Override
     public Boolean convertValue(String value) {
-        return value.equals("?") ? null : value.equals("1");
+        return value.equals("?") ? null : value.equals("1") || value.equals("true");
     }
 
     /**
