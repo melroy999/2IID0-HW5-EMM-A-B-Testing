@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class AbstractRefinementOperator {
-    public abstract Set<Group> generate(Group seed, Dataset dataset, AbstractQualityMeasure qualityMeasure, HashSet<BigInteger> encounteredGroups, HashSet<String> blacklist);
+    public abstract Set<Group> generate(Group seed, Dataset dataset, AbstractQualityMeasure qualityMeasure, HashSet<BigInteger> encounteredGroups);
 
     public abstract String getName();
 }

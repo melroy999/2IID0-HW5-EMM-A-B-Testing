@@ -7,10 +7,7 @@ import search.refinement.QualityRefinementOperator;
 import search.refinement.SimpleRefinementOperator;
 import util.GroupPriorityQueue;
 import util.SieveOfAtkin;
-import util.Util;
 
-import javax.swing.*;
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -23,7 +20,7 @@ public class Core {
     private static int RESULT_SET_LENGTH = 100;
     private static int MINIMUM_GROUP_SIZE = 2;
     private static double MAXIMUM_FRACTION = 1.0;
-    private static String[] BLACKLIST = new String[]{};
+    private static String[] blacklist = new String[]{};
     private static boolean USE_THREADS = false;
     private static AbstractRefinementOperator REFINEMENT_OPERATOR = new QualityRefinementOperator();
     private static AbstractQualityMeasure QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
@@ -46,7 +43,7 @@ public class Core {
             SEARCH_WIDTH = 25;
             REFINEMENT_OPERATOR = new QualityRefinementOperator();
             QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
-            BLACKLIST = new String[]{"decision","decision_o"};
+            blacklist = new String[]{"decision","decision_o"};
             countNullAsZero = false;
             targetAttribute = "match";
         } else {
@@ -89,7 +86,7 @@ public class Core {
                                 MAXIMUM_FRACTION = Double.valueOf(value);
                                 break;
                             case "blacklist":
-                                BLACKLIST = value.split(",");
+                                blacklist = value.split(",");
                                 break;
                             case "refinement-operator":
                                 switch (value) {
@@ -124,13 +121,13 @@ public class Core {
 
         System.out.println("Taking values SEARCH_DEPTH = " + SEARCH_DEPTH + ", SEARCH_WIDTH = " + SEARCH_WIDTH + ", RESULT_SET_LENGTH = " + RESULT_SET_LENGTH + ", MINIMUM_GROUP_SIZE = " + MINIMUM_GROUP_SIZE + ", MAXIMUM_FRACTION = " + MAXIMUM_FRACTION + ", USE_THREADS = " + USE_THREADS + ".");
         try {
-            Dataset dataset = Dataset.loadARFF("/dataset.arff", countNullAsZero, targetAttribute);
+            HashSet<String> blacklist = new HashSet<>();
+            blacklist.addAll(Arrays.asList(Core.blacklist));
+
+            Dataset dataset = Dataset.loadARFF("/dataset.arff", countNullAsZero, targetAttribute, blacklist);
             System.out.println("P=" + dataset.getP() + ", N=" + dataset.getN() + ", P+N=" + (dataset.getP() + dataset.getN()) + ", Number of instances: " + dataset.getInstances().size());
 
-            HashSet<String> blacklist = new HashSet<>();
-            blacklist.addAll(Arrays.asList(BLACKLIST));
-
-            System.out.println("Blacklisted attributes: " + Arrays.toString(BLACKLIST).replaceAll("(\\{|\\})",""));
+            System.out.println("Blacklisted attributes: " + Arrays.toString(Core.blacklist).replaceAll("(\\{|\\})",""));
             System.out.println();
 
             System.out.println("=======================================================================================================================================");
@@ -140,7 +137,7 @@ public class Core {
             System.out.println("Target attribute: \t\t\t[" + dataset.getTargetAttribute().getName() + "]");
             System.out.println();
             Date start = new Date();
-            GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, USE_THREADS).search(dataset, QUALITY_MEASURE, REFINEMENT_OPERATOR, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH, blacklist);
+            GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, USE_THREADS).search(dataset, QUALITY_MEASURE, REFINEMENT_OPERATOR, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH);
             Date end = new Date();
 
             if(printCSVFormat) {
@@ -191,7 +188,7 @@ public class Core {
         RESULT_SET_LENGTH = 100;
         MINIMUM_GROUP_SIZE = 2;
         MAXIMUM_FRACTION = 1.0;
-        BLACKLIST = new String[]{};
+        blacklist = new String[]{};
         USE_THREADS = false;
         REFINEMENT_OPERATOR = new QualityRefinementOperator();
         QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);

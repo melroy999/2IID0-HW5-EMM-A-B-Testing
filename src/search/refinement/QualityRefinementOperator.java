@@ -12,13 +12,13 @@ import java.util.Set;
 
 public class QualityRefinementOperator extends AbstractRefinementOperator {
     @Override
-    public Set<Group> generate(Group seed, Dataset dataset, AbstractQualityMeasure qualityMeasure, HashSet<BigInteger> encounteredGroups, HashSet<String> blacklist) {
+    public Set<Group> generate(Group seed, Dataset dataset, AbstractQualityMeasure qualityMeasure, HashSet<BigInteger> encounteredGroups) {
         HashSet<Group> groups = new HashSet<>();
         //Extend the seed by attributes and constraints that are not similar.
 
         //Iterate over all attributes.
         for(AbstractAttribute attribute : dataset.getAttributes()) {
-            if(blacklist.contains(attribute.getName()) || dataset.getTargetAttribute() == attribute) {
+            if(dataset.getTargetAttribute() == attribute) {
                 //Skip if the name is in the blacklist.
                 continue;
             }

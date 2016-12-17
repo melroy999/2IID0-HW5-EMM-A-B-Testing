@@ -7,6 +7,7 @@ import group.Comparison;
 import util.FileLoader;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class Dataset {
@@ -125,26 +126,37 @@ public class Dataset {
      * @param filePath The path to the file we want to load.
      * @param countNullAsZero Whether we count null values as zero in numerical cases.
      * @param targetAttribute Name of the target attribute.
+     * @param blacklist The blacklisted attributes.
      * @return The arff file as an object.
      * @throws Exception Throws an exception if the file cannot be loaded.
      */
-    public static Dataset loadARFF(String filePath, boolean countNullAsZero, String targetAttribute) throws Exception {
+    public static Dataset loadARFF(String filePath, boolean countNullAsZero, String targetAttribute, HashSet<String> blacklist) throws Exception {
         lines.clear();
         lines.addAll(FileLoader.readAllLines(filePath));
 
         List<AbstractAttribute> attributes = new ArrayList<>();
         String relation = "";
         List<Instance> instances = new ArrayList<>();
+        List<Integer> offset = new ArrayList<>();
 
         int attributeCounter = 0;
         int instanceCounter = 0;
+        int offsetValue = 0;
         for(String line : lines) {
             if(line.startsWith("@attribute")) {
-                attributes.add(AbstractAttribute.getAttribute(line, attributeCounter++, countNullAsZero));
+                AbstractAttribute attribute = AbstractAttribute.getAttribute(line, attributeCounter, countNullAsZero);
+                if(!blacklist.contains(attribute.getName())) {
+                    attributes.add(attribute);
+                    offset.add(offsetValue);
+                    attributeCounter++;
+                } else {
+                    System.out.println("Skipped adding the attribute " + attribute.getName());
+                    offsetValue++;
+                }
             } else if(line.startsWith("@relation")) {
                 relation = line.replaceFirst("@relation ","").replaceAll("'","");
             } else if(line.contains(",")) {
-                instances.add(new Instance(instanceCounter++, line, attributes, attributes.size() - 1));
+                instances.add(new Instance(instanceCounter++, line, attributes, blacklist, offset));
             }
         }
 

@@ -29,7 +29,7 @@ public class BeamSearch {
         this.multiThreading = multiThreading;
     }
 
-    public GroupPriorityQueue search(Dataset dataset, AbstractQualityMeasure qualityMeasure, AbstractRefinementOperator refinementOperator, int w, int d, int resultSetSize, HashSet<String> blacklist) throws InterruptedException {
+    public GroupPriorityQueue search(Dataset dataset, AbstractQualityMeasure qualityMeasure, AbstractRefinementOperator refinementOperator, int w, int d, int resultSetSize) throws InterruptedException {
         //Create the executor.
         executor = Executors.newFixedThreadPool(8);
 
@@ -79,7 +79,7 @@ public class BeamSearch {
                 //System.out.println("\t\tConfusionTable: " + seed.getConfusionMatrix());
 
                 //Get the candidate subgroups from the seed.
-                Set<Group> groups = refinementOperator.generate(seed, dataset, qualityMeasure, encounteredGroups, blacklist);
+                Set<Group> groups = refinementOperator.generate(seed, dataset, qualityMeasure, encounteredGroups);
 
                 //Iterate over all the groups, do this with multithreading if desired.
                 if(multiThreading) {

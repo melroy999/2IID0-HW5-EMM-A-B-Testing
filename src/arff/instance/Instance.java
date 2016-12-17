@@ -1,8 +1,10 @@
 package arff.instance;
 
 import arff.attribute.AbstractAttribute;
+import com.sun.deploy.util.BlackList;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -15,20 +17,19 @@ public class Instance {
     //The list of values, which is of the type Object such that we can cast to the correct type later on.
     private final Object[] values;
 
-    //The id of the target value.
-    private final AbstractAttribute target;
-
     /**
      * Create an instance.
      *
      * @param id The unique identifier of the instance.
      * @param line The line the instance is contained in.
      * @param attributes The list of attributes that the instance is composed of.
+     * @param blacklist The blacklisted attributes.
+     * @param offset The index offset,  as we removed some attributes before initializing, thus de ids do not match.
      */
-    public Instance(int id, String line, List<AbstractAttribute> attributes, int targetId) {
+    public Instance(int id, String line, List<AbstractAttribute> attributes, HashSet<String> blacklist, List<Integer> offset) {
         this.id = id;
         String[] stringValues = line.split(",");
-        values = new Object[stringValues.length];
+        values = new Object[stringValues.length - blacklist.size()];
 
         //Convert the string representations of values to the appropriate type.
         for(AbstractAttribute attribute : attributes) {
@@ -36,20 +37,8 @@ public class Instance {
             int i = attribute.getId();
 
             //Make sure that the object is saved as the appropriate type, i.e. String, Double etc.
-            values[i] = attribute.convertValue(stringValues[i]);
+            values[i] = attribute.convertValue(stringValues[i + offset.get(i)]);
         }
-
-        //Set the target attribute.
-        this.target = attributes.get(targetId);
-    }
-
-    /**
-     * Get the required target value.
-     *
-     * @return the target value to receive.
-     */
-    public Object getTargetValue() {
-        return target.getValue(this);
     }
 
     /**
