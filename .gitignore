@@ -4,6 +4,7 @@
 # Except for the following folders:
 !/src/
 !/resources/
+!/data/
 
 # Except for the following files:
 !.gitignore

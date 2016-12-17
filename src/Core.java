@@ -27,6 +27,7 @@ public class Core {
     private static boolean printCSVFormat = false;
     private static boolean countNullAsZero = false;
     private static String targetAttribute = "";
+    private static String filePath = "";
 
     public static void main(String[] args) {
         SieveOfAtkin.resetCounter();
@@ -46,6 +47,7 @@ public class Core {
             blacklist = new String[]{"decision","decision_o"};
             countNullAsZero = false;
             targetAttribute = "match";
+            filePath = "data/dataset.arff";
         } else {
             System.out.println("Arguments: " + Arrays.toString(args));
             for(int i = 0; i < args.length; i++) {
@@ -88,6 +90,9 @@ public class Core {
                             case "blacklist":
                                 blacklist = value.split(",");
                                 break;
+                            case "dataset-file":
+                                filePath = value;
+                                break;
                             case "refinement-operator":
                                 switch (value) {
                                     case "sro": REFINEMENT_OPERATOR = new SimpleRefinementOperator();
@@ -119,12 +124,14 @@ public class Core {
             }
         }
 
+        assert !targetAttribute.equals("");
+
         System.out.println("Taking values SEARCH_DEPTH = " + SEARCH_DEPTH + ", SEARCH_WIDTH = " + SEARCH_WIDTH + ", RESULT_SET_LENGTH = " + RESULT_SET_LENGTH + ", MINIMUM_GROUP_SIZE = " + MINIMUM_GROUP_SIZE + ", MAXIMUM_FRACTION = " + MAXIMUM_FRACTION + ", USE_THREADS = " + USE_THREADS + ".");
         try {
             HashSet<String> blacklist = new HashSet<>();
             blacklist.addAll(Arrays.asList(Core.blacklist));
 
-            Dataset dataset = Dataset.loadARFF("/dataset.arff", countNullAsZero, targetAttribute, blacklist);
+            Dataset dataset = Dataset.loadARFF(filePath, countNullAsZero, targetAttribute, blacklist);
             System.out.println("P=" + dataset.getP() + ", N=" + dataset.getN() + ", P+N=" + (dataset.getP() + dataset.getN()) + ", Number of instances: " + dataset.getInstances().size());
 
             System.out.println("Blacklisted attributes: " + Arrays.toString(Core.blacklist).replaceAll("(\\{|\\})",""));
@@ -194,5 +201,7 @@ public class Core {
         QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
         printCSVFormat = false;
         countNullAsZero = false;
+        targetAttribute = "";
+        filePath = "";
     }
 }
