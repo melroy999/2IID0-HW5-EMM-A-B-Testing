@@ -4,6 +4,7 @@ import arff.Dataset;
 import arff.instance.Instance;
 import group.Comparison;
 
+import java.util.Arrays;
 import java.util.Comparator;
 
 /**
@@ -48,7 +49,7 @@ public class BooleanAttribute extends AbstractAttribute<Boolean> {
      */
     @Override
     public Comparison[] getComparisons() {
-        return new Comparison[]{Comparison.EQ/*, Comparison.NEQ*/};
+        return new Comparison[]{Comparison.EQ};
     }
 
     /**

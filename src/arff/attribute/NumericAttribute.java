@@ -107,15 +107,25 @@ public class NumericAttribute extends AbstractAttribute<Double> {
 
     @Override
     public boolean contains(Constraint<Double> constraint, Double value) {
+        Double constraintValue = constraint.getValue();
+
+        if(value == null) {
+            if(isCountNullAsZero()) {
+                value = 0d;
+            } else {
+                return false;
+            }
+        }
+
         switch (constraint.getComparison()) {
             case EQ:
-                return value.equals(constraint.getValue());
+                return value.equals(constraintValue);
             case NEQ:
-                return !value.equals(constraint.getValue());
+                return !value.equals(constraintValue);
             case LTEQ:
-                return value <= constraint.getValue();
+                return value <= constraintValue;
             case GTEQ:
-                return value >= constraint.getValue();
+                return value >= constraintValue;
         }
         return false;
     }

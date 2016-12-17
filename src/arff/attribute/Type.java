@@ -19,7 +19,8 @@ public enum Type {
         switch (type) {
             case "numeric":
                 return NUMERIC;
-            case "{0,1}":
+            //Without {}, as these have been removed previously...
+            case "0,1":
                 return BOOLEAN;
             default:
                 return SET;

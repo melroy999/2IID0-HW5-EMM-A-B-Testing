@@ -1,4 +1,6 @@
 import arff.Dataset;
+import arff.attribute.AbstractAttribute;
+import group.Comparison;
 import group.Group;
 import search.BeamSearch;
 import search.quality.*;
@@ -28,6 +30,8 @@ public class Core {
     private static boolean countNullAsZero = false;
     private static String targetAttribute = "";
     private static String filePath = "";
+    private static String targetValue = "";
+    private static Comparison targetComparison = Comparison.EQ;
 
     public static void main(String[] args) {
         SieveOfAtkin.resetCounter();
@@ -48,6 +52,8 @@ public class Core {
             countNullAsZero = false;
             targetAttribute = "match";
             filePath = "data/dataset.arff";
+            targetValue = "1";
+            targetComparison = Comparison.EQ;
         } else {
             System.out.println("Arguments: " + Arrays.toString(args));
             for(int i = 0; i < args.length; i++) {
@@ -77,9 +83,31 @@ public class Core {
                                 break;
                             case "target":
                                 targetAttribute = value;
+
+                                //We have another value for the target.
+                                targetValue = args[i + 1];
+                                i++;
                                 break;
                             case "set-length":
                                 RESULT_SET_LENGTH = Integer.valueOf(value);
+                                break;
+                            case "target-comparison":
+                                switch (value) {
+                                    case "eq":
+                                        targetComparison = Comparison.EQ;
+                                        break;
+                                    case "neq":
+                                        targetComparison = Comparison.NEQ;
+                                        break;
+                                    case "lteq":
+                                        targetComparison = Comparison.LTEQ;
+                                        break;
+                                    case "gteq":
+                                        targetComparison = Comparison.GTEQ;
+                                        break;
+                                    default:
+                                        System.out.println("Taking EQ on default, as the given comparator could not be found.");
+                                }
                                 break;
                             case "min-group-size":
                                 MINIMUM_GROUP_SIZE = Integer.valueOf(value);
@@ -118,6 +146,8 @@ public class Core {
 
                                 i++;
                                 break;
+                            default:
+                                System.out.println("Unknown parameter -" + value + ".");
                         }
                     }
                 }
@@ -131,7 +161,7 @@ public class Core {
             HashSet<String> blacklist = new HashSet<>();
             blacklist.addAll(Arrays.asList(Core.blacklist));
 
-            Dataset dataset = Dataset.loadARFF(filePath, countNullAsZero, targetAttribute, blacklist);
+            Dataset dataset = Dataset.loadARFF(filePath, countNullAsZero, targetAttribute, targetValue, targetComparison, blacklist);
             System.out.println("P=" + dataset.getP() + ", N=" + dataset.getN() + ", P+N=" + (dataset.getP() + dataset.getN()) + ", Number of instances: " + dataset.getInstances().size());
 
             System.out.println("Blacklisted attributes: " + Arrays.toString(Core.blacklist).replaceAll("(\\{|\\})",""));
@@ -141,7 +171,7 @@ public class Core {
             System.out.println("Quality measure:\t\t\t[" + QUALITY_MEASURE.getName() + "] with minimum quality value " + QUALITY_MEASURE.getMinimumValue());
             System.out.println("Quality measure formula:\t" + QUALITY_MEASURE.getFormula());
             System.out.println("Refinement Operator:\t\t[" + REFINEMENT_OPERATOR.getName() + "]");
-            System.out.println("Target attribute: \t\t\t[" + dataset.getTargetAttribute().getName() + "]");
+            System.out.println("Target attribute: \t\t\t[" + dataset.getTargetAttribute().getName() + "] with constraint [" + dataset.getTargetConstraint() + "]");
             System.out.println();
             Date start = new Date();
             GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, USE_THREADS).search(dataset, QUALITY_MEASURE, REFINEMENT_OPERATOR, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH);
@@ -203,5 +233,7 @@ public class Core {
         countNullAsZero = false;
         targetAttribute = "";
         filePath = "";
+        targetValue = "";
+        targetComparison = Comparison.EQ;
     }
 }

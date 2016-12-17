@@ -158,7 +158,7 @@ public abstract class AbstractAttribute<T> {
             long prime = SieveOfAtkin.getNextPrime();
 
             //For each comparison mode we know this attribute uses.
-            for(Comparison comparison : value != null ? getComparisons() : new Comparison[]{Comparison.EQ}) {
+            for(Comparison comparison : value != null ? this.getComparisons() : new Comparison[]{Comparison.EQ, Comparison.NEQ}) {
                 Constraint<T> constraint = new Constraint<>(value, comparison, this, primeMap.get(comparison), prime);
                 constraints.add(constraint);
                 stringToConstraint.put(constraint.toString(), constraint);

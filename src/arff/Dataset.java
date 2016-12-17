@@ -7,6 +7,7 @@ import group.Comparison;
 import util.FileLoader;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -43,7 +44,11 @@ public class Dataset {
         }
 
         //Set the target constraint.
-        this.targetConstraint = targetAttribute.getConstraint(targetAttribute.getName() + " " + comparison + " " + targetValue);
+        this.targetConstraint = targetAttribute.getConstraint(targetAttribute.getName() + " " + comparison + " " + targetAttribute.convertValue(targetValue));
+
+        if(targetConstraint == null) {
+            throw new IllegalArgumentException("Target value " + targetValue + " or comparison mode " + comparison + " is invalid. The target attribute only supports the following comparisons: " + Arrays.toString(targetAttribute.getComparisons()) + ".");
+        }
 
         //Intermediary counters.
         int P = 0;
@@ -130,7 +135,7 @@ public class Dataset {
      * @return The arff file as an object.
      * @throws Exception Throws an exception if the file cannot be loaded.
      */
-    public static Dataset loadARFF(String filePath, boolean countNullAsZero, String targetAttribute, HashSet<String> blacklist) throws Exception {
+    public static Dataset loadARFF(String filePath, boolean countNullAsZero, String targetAttribute, String targetValue, Comparison targetComparison, HashSet<String> blacklist) throws Exception {
         lines.clear();
         lines.addAll(FileLoader.readAllLines(filePath));
 
@@ -177,7 +182,7 @@ public class Dataset {
             System.out.println(">>> WARNING: target attribute [" + targetAttribute + "] could not be found, taking last attribute on default.");
         }
 
-        return new Dataset(attributes, instances, relation, targetAttributeId, "1", Comparison.EQ);
+        return new Dataset(attributes, instances, relation, targetAttributeId, targetValue, targetComparison);
     }
 
     /**
