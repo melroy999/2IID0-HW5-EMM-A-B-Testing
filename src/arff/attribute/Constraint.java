@@ -111,6 +111,12 @@ public class Constraint<T> {
         return product;
     }
 
+    /**
+     * Whether the constraint contains the given instance.
+     *
+     * @param instance The instance to verify.
+     * @return Whether the instance evaluates true on the constraint.
+     */
     public boolean contains(Instance instance) {
         return attribute.contains(this, instance);
     }

@@ -18,17 +18,37 @@ import java.util.concurrent.Executors;
  * Class performing beam search.
  */
 public class BeamSearch {
+    //Parameters used by the beamsearch.
     private ExecutorService executor;
     private final double minimumCoverage;
     private final double maximumCoverageFraction;
     private final boolean multiThreading;
 
+    /**
+     * Create the beam search object, with the given parameters.
+     *
+     * @param minimumCoverage The minimum coverage valid subgroups should have.
+     * @param maximumCoverageFraction The maximum coverage fraction of the subgroups.
+     * @param multiThreading Whether we use multi threading or not.
+     */
     public BeamSearch(double minimumCoverage, double maximumCoverageFraction, boolean multiThreading) {
         this.minimumCoverage = minimumCoverage;
         this.maximumCoverageFraction = maximumCoverageFraction;
         this.multiThreading = multiThreading;
     }
 
+    /**
+     * Do a beam search.
+     *
+     * @param dataset The dataset to use.
+     * @param qualityMeasure The quality measure to use.
+     * @param refinementOperator The refinement operator to use.
+     * @param w The search width.
+     * @param d The seardh depth.
+     * @param resultSetSize The size of the result set, which corresponds to the value "q" in the algorithm.
+     * @return A "Priority queue" of maximum size "resultSetSize" containing the best subgroups in order of evaluation value.
+     * @throws InterruptedException When a thread is interrupted.
+     */
     public GroupPriorityQueue search(Dataset dataset, AbstractQualityMeasure qualityMeasure, AbstractRefinementOperator refinementOperator, int w, int d, int resultSetSize) throws InterruptedException {
         //Create the executor.
         executor = Executors.newFixedThreadPool(8);
@@ -105,14 +125,14 @@ public class BeamSearch {
     /**
      * A simple implementation of iterating over groups, without multithreading.
      *
-     * @param dataset
-     * @param qualityMeasure
-     * @param resultSet
-     * @param positives
-     * @param beam
-     * @param seedIndices
-     * @param seedNullIndices
-     * @param groups
+     * @param dataset The dataset to use.
+     * @param qualityMeasure The quality measure to use.
+     * @param resultSet The result priority queue.
+     * @param positives The set of indices of instances that are evaluated positive with the target.
+     * @param beam The beam object to use during the search.
+     * @param seedIndices The indices that are part of the seed group.
+     * @param seedNullIndices The indices that were null in the seed group.
+     * @param groups The set of groups to iterate over.
      */
     private void iterateOverGroups(Dataset dataset, AbstractQualityMeasure qualityMeasure, GroupPriorityQueue resultSet, Set<Integer> positives, GroupPriorityQueue beam, Set<Integer> seedIndices, Set<Integer> seedNullIndices, Set<Group> groups) {
         //Iterate over all these groups.
@@ -136,14 +156,14 @@ public class BeamSearch {
     /**
      * Iterating over groups with multithreading.
      *
-     * @param dataset
-     * @param qualityMeasure
-     * @param resultSet
-     * @param positives
-     * @param beam
-     * @param seedIndices
-     * @param seedNullIndices
-     * @param groups
+     * @param dataset The dataset to use.
+     * @param qualityMeasure The quality measure to use.
+     * @param resultSet The result priority queue.
+     * @param positives The set of indices of instances that are evaluated positive with the target.
+     * @param beam The beam object to use during the search.
+     * @param seedIndices The indices that are part of the seed group.
+     * @param seedNullIndices The indices that were null in the seed group.
+     * @param groups The set of groups to iterate over.
      */
     private void iterateOverGroupsThreaded(Dataset dataset, AbstractQualityMeasure qualityMeasure, GroupPriorityQueue resultSet, Set<Integer> positives, GroupPriorityQueue beam, Set<Integer> seedIndices, Set<Integer> seedNullIndices, Set<Group> groups) throws InterruptedException {
         //Create a collection of callables that have to be ran.

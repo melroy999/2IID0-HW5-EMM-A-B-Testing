@@ -101,11 +101,25 @@ public class BooleanAttribute extends AbstractAttribute<Boolean> {
         };
     }
 
+    /**
+     * Whether the value of the instance is contained by the constraint connected to this attribute.
+     *
+     * @param constraint The constraint to verify.
+     * @param instance The instance to evaluate.
+     * @return Whether the value in the instance connected to this attribute is contained within the constraint.
+     */
     @Override
     public boolean contains(Constraint<Boolean> constraint, Instance instance) {
         return contains(constraint, (Boolean) instance.getValue(this));
     }
 
+    /**
+     * Whether the value is contained by the constraint connected to this attribute.
+     *
+     * @param constraint The constraint to verify.
+     * @param value The value to evaluate.
+     * @return Whether the value is contained within the constraint.
+     */
     @Override
     public boolean contains(Constraint<Boolean> constraint, Boolean value) {
         switch (constraint.getComparison()) {

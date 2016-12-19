@@ -15,7 +15,11 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 
+/**
+ * Class used to start the beam search process.
+ */
 public class Core {
+    //Parameters that define a beam search.
     private static final int DECIMAL_PLACES = 6;
     private static int SEARCH_DEPTH = 1;
     private static int SEARCH_WIDTH = 10;
@@ -33,7 +37,18 @@ public class Core {
     private static String targetValue = "";
     private static Comparison targetComparison = Comparison.EQ;
 
+    /**
+     * The main starter of the beam search, that reads the parameter input and sets the appropriate values.
+     *
+     * @param args The list of arguments.
+     */
     public static void main(String[] args) {
+        if(args[0].equals("--help")) {
+            printHelp();
+            return;
+        }
+
+        //Reset the sieve prime counter.
         SieveOfAtkin.resetCounter();
 
         //Set default values.
@@ -161,6 +176,7 @@ public class Core {
             HashSet<String> blacklist = new HashSet<>();
             blacklist.addAll(Arrays.asList(Core.blacklist));
 
+            //Load the data from the given data file.
             Dataset dataset = Dataset.loadARFF(filePath, countNullAsZero, targetAttribute, targetValue, targetComparison, blacklist);
             System.out.println("P=" + dataset.getP() + ", N=" + dataset.getN() + ", P+N=" + (dataset.getP() + dataset.getN()) + ", Number of instances: " + dataset.getInstances().size());
 
@@ -168,6 +184,7 @@ public class Core {
                 System.out.println(attribute);
             }
 
+            //Report on information about the settings.
             System.out.println("Blacklisted attributes: " + Arrays.toString(Core.blacklist).replaceAll("(\\{|\\})",""));
             System.out.println();
 
@@ -178,6 +195,8 @@ public class Core {
             System.out.println("Target attribute: \t\t\t[" + dataset.getTargetAttribute().getName() + "] with constraint [" + dataset.getTargetConstraint() + "]");
             System.out.println();
             Date start = new Date();
+
+            //Do the beam search.
             GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, USE_THREADS).search(dataset, QUALITY_MEASURE, REFINEMENT_OPERATOR, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH);
             Date end = new Date();
 
@@ -193,6 +212,13 @@ public class Core {
         }
     }
 
+    /**
+     * Print the priority queue in a human readable format.
+     *
+     * @param queue The queue to print.
+     * @param start The time at which the beam search started.
+     * @param end The time at which the beam search ended.
+     */
     private static void printQueue(GroupPriorityQueue queue, Date start, Date end) {
         System.out.println();
         System.out.println("Resulting subgroups: ");
@@ -208,6 +234,13 @@ public class Core {
         System.out.println();
     }
 
+    /**
+     * Print the priority queue as a CSV file format.
+     *
+     * @param queue The queue to print.
+     * @param start The time at which the beam search started.
+     * @param end The time at which the beam search ended.
+     */
     private static void printQueueCSV(GroupPriorityQueue queue, Date start, Date end) {
         System.out.println();
         System.out.println("Resulting table: ");
@@ -223,6 +256,9 @@ public class Core {
         System.out.println();
     }
 
+    /**
+     * Restore all the default values for the parameters.
+     */
     private static void restoreDefaults() {
         SEARCH_DEPTH = 1;
         SEARCH_WIDTH = 10;
@@ -239,5 +275,52 @@ public class Core {
         filePath = "";
         targetValue = "";
         targetComparison = Comparison.EQ;
+    }
+
+    /**
+     * Print all the parameter settings, together with an explanation on what they do.
+     */
+    private static void printHelp() {
+        System.out.println("Parameters used to instantiate a beam search: ");
+        System.out.println("\t-dataset-file value: The path to the dataset file. (MANDATORY)");
+        System.out.println();
+        System.out.println("\t-target value value2: The first value is the name of the target attribute. The second value is the actual value that is targeted within the attribute. (MANDATORY)");
+        System.out.println();
+        System.out.println("\t-T: Enable multi-threading. By enabling this, the program will use 8 threads during the beam search, which gives a considerable performance increase.");
+        System.out.println();
+        System.out.println("\t-csv: Print the result table with csv formatting. When copied, the text can be added to a csv file, through which the data can be opened in excel.");
+        System.out.println();
+        System.out.println("\t-null-is-zero: Consider numeric null values to have a value of 0. On default, null values are left out of the evaluation.");
+        System.out.println();
+        System.out.println("\t-d value: Set the beam search depth to the desired integer value. (default value: " + SEARCH_DEPTH + ")");
+        System.out.println();
+        System.out.println("\t-w value: Set the beam search width to the desired integer value. (default value: " + SEARCH_WIDTH + ")");
+        System.out.println();
+        System.out.println("\t-set-length value: The size of the returned priority queue. (default value: " + RESULT_SET_LENGTH + ")");
+        System.out.println();
+        System.out.println("\t-target-comparison value: Set the comparison mode that determines whether the instance is a match with the target value.");
+        System.out.println("\t\tMust be one of the following: {EQ,NEQ,LTEQ,GTEQ} (default value: " + targetComparison + ")");
+        System.out.println("\t\t\tEQ: " + Comparison.EQ + ", NEQ: " + Comparison.NEQ + ", LTEQ: " + Comparison.LTEQ + ", GTEQ: " + Comparison.GTEQ);
+        System.out.println();
+        System.out.println("\t-min-group-size value: The minimum coverage a subgroup should have. (default value: " + MINIMUM_GROUP_SIZE + ")");
+        System.out.println();
+        System.out.println("\t-max-group-size-fraction value: The maximum coverage that a subgroup may have relative to the size of the dataset. This value should be a fraction. (default value: " + MAXIMUM_FRACTION + ")");
+        System.out.println();
+        System.out.println("\t-blacklist value: A list of attributes (without spaces, seperated by commas) that should be ignored.");
+        System.out.println("\tExample: \'-blacklist decision,decision_o\'");
+        System.out.println();
+        System.out.println("\t-refinement-operator value: The type of refinement operator to use.");
+        System.out.println("\t\tMust be one of the following: {SRO,QRO} (default value: SRO)");
+        System.out.println("\t\t\tSRO: Simple refinement operator, which extends the seed with all possible constraints.");
+        System.out.println("\t\t\tQRO: Quality refinement operator, which iterates over all possible constraints, \n" +
+                "\t\t\t\tand orders them in order of quality of the added constraint.");
+        System.out.println();
+        System.out.println("\t-quality-measure value value2: Set the quality measure used by the beam search.");
+        System.out.println("\t\tThe first value is the name of the quality measure, which must be one of the following:");
+        System.out.println("\t\t{WRA,SEN,SPEC,X2}");
+        System.out.println("\t\t\tWRA: Weighted Relative Accuracy, SEN: Sensitivity, SPEC: Specificity, X2: X2 statistic");
+        System.out.println("\t\tThe second value is the minimum quality that the beam search result should show.");
+        System.out.println("\tThe default configuration used is -quality-measure WRA 0.02");
+        System.out.println();
     }
 }

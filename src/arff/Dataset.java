@@ -31,6 +31,16 @@ public class Dataset {
     //The target attribute.
     private final AbstractAttribute targetAttribute;
 
+    /**
+     * Create a dataset.
+     *
+     * @param attributes The list of attributes.
+     * @param instances The list of instances.
+     * @param relationName The name of the relation.
+     * @param targetId The id of the target attribute.
+     * @param targetValue The target value.
+     * @param comparison The comparison used relative to the target value.
+     */
     public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int targetId, String targetValue, Comparison comparison) {
         this.instances = instances;
         this.attributes = attributes;
@@ -131,6 +141,8 @@ public class Dataset {
      * @param filePath The path to the file we want to load.
      * @param countNullAsZero Whether we count null values as zero in numerical cases.
      * @param targetAttribute Name of the target attribute.
+     * @param targetValue The target value.
+     * @param targetComparison The comparison to use relative to the target value.
      * @param blacklist The blacklisted attributes.
      * @return The arff file as an object.
      * @throws Exception Throws an exception if the file cannot be loaded.

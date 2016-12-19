@@ -7,7 +7,11 @@ package search.quality;
  * ROC 'n' Rule Learning - Towards a Better Understanding of Covering Algorithms, Machine Learning 58(1):39{77, 2005.
  */
 public class WeightedRelativeAccuracyQualityMeasure extends AbstractQualityMeasure {
-
+    /**
+     * Create an quality measure.
+     *
+     * @param minimumValue The minimum value to check for.
+     */
     public WeightedRelativeAccuracyQualityMeasure(double minimumValue) {
         super(minimumValue);
     }
@@ -26,11 +30,21 @@ public class WeightedRelativeAccuracyQualityMeasure extends AbstractQualityMeasu
         return ((p + n) / (P + N)) * (p / (p + n) - P / (P + N));
     }
 
+    /**
+     * Get the formula used as a string object.
+     *
+     * @return A copy of the formula in the evaluate function as a string.
+     */
     @Override
     public String getFormula() {
         return "((p + n) / (P + N)) * (p / (p + n) - P / (P + N))";
     }
 
+    /**
+     * Get the full name of a quality measure.
+     *
+     * @return The full name of a quality measure.
+     */
     @Override
     public String getName() {
         return "Weighted Relative Accuracy";

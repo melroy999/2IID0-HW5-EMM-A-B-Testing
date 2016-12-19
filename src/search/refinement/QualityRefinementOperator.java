@@ -10,7 +10,19 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * A refinement operator that sorts the resulting set of groups on their quality, from high to low.
+ */
 public class QualityRefinementOperator extends AbstractRefinementOperator {
+    /**
+     * Generate a set of groups based upon the input seed.
+     *
+     * @param seed The group to use as a seed.
+     * @param dataset The dataset to take the data from.
+     * @param qualityMeasure The quality measure that is used.
+     * @param encounteredGroups The prime products of the groups that have already been encountered.
+     * @return A set of groups that can be used in the beam search.
+     */
     @Override
     public Set<Group> generate(Group seed, Dataset dataset, AbstractQualityMeasure qualityMeasure, HashSet<BigInteger> encounteredGroups) {
         HashSet<Group> groups = new HashSet<>();
@@ -47,6 +59,11 @@ public class QualityRefinementOperator extends AbstractRefinementOperator {
         return groups;
     }
 
+    /**
+     * Get the name of the quality refinement mode.
+     *
+     * @return Full name of the quality refinement mode.
+     */
     @Override
     public String getName() {
         return "Quality Refinement";

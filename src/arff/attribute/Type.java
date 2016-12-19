@@ -38,6 +38,12 @@ public enum Type {
         }
     }
 
+    /**
+     * Check by parsing whether the input value can be seen as a timestamp.
+     *
+     * @param inputString The string to verify.
+     * @return True if the value could be parsed, false if an error was thrown.
+     */
     public static boolean isTimeStampValid(String inputString) {
         try {
             DateAttribute.format.parse(inputString);
@@ -48,6 +54,12 @@ public enum Type {
         }
     }
 
+    /**
+     * Whether the given input string can be seen as a UUID value.
+     *
+     * @param inputString The potential UUID value.
+     * @return Whether the value matches the structure of a UUID.
+     */
     public static boolean isUUID(String inputString) {
         return pattern.matcher(inputString).matches();
     }

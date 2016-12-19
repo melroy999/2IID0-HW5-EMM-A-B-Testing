@@ -32,7 +32,12 @@ public class GroupPriorityQueue extends TreeSet<Group> {
         return returnValue;
     }
 
+    /**
+     * Get the worst value that is currently in the priority queue.
+     *
+     * @return The worst value within the priority queue.
+     */
     public double getWorstValue() {
-        return worstValue;
+        return this.last().getEvaluation();
     }
 }

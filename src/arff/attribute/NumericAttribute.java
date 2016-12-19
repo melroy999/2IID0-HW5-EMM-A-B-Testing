@@ -100,11 +100,25 @@ public class NumericAttribute extends AbstractAttribute<Double> {
         };
     }
 
+    /**
+     * Whether the value of the instance is contained by the constraint connected to this attribute.
+     *
+     * @param constraint The constraint to verify.
+     * @param instance The instance to evaluate.
+     * @return Whether the value in the instance connected to this attribute is contained within the constraint.
+     */
     @Override
     public boolean contains(Constraint<Double> constraint, Instance instance) {
         return contains(constraint, (Double) instance.getValue(this));
     }
 
+    /**
+     * Whether the value is contained by the constraint connected to this attribute.
+     *
+     * @param constraint The constraint to verify.
+     * @param value The value to evaluate.
+     * @return Whether the value is contained within the constraint.
+     */
     @Override
     public boolean contains(Constraint<Double> constraint, Double value) {
         Double constraintValue = constraint.getValue();

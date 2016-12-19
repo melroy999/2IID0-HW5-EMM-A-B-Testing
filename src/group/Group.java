@@ -335,12 +335,22 @@ public class Group implements Comparable<Group> {
         }
     }
 
+    /**
+     * Get the string representation of a group.
+     *
+     * @return String representation of a group.
+     */
     @Override
     public String toString() {
         return getReadableConstraints() +
                 ", evaluation: " + evaluation;
     }
 
+    /**
+     * Convert the set of constraints to a human readable string.
+     *
+     * @return The toString value of each constraint in the constraints list, combined with ∧.
+     */
     public String getReadableConstraints() {
         String result = "";
         boolean isFirst = true;
@@ -355,10 +365,20 @@ public class Group implements Comparable<Group> {
         return result;
     }
 
+    /**
+     * Get the confusion matrix that the group uses.
+     *
+     * @return The confusion matrix if set, null otherwise.
+     */
     public ConfusionMatrix getConfusionMatrix() {
         return confusionMatrix;
     }
 
+    /**
+     * Get the first constraint within the group, which is the root constraint, as we use a linked set.
+     *
+     * @return The first constraint in the constraints set.
+     */
     public Constraint getFirstConstraint() {
         return constraints.peekFirst();
     }

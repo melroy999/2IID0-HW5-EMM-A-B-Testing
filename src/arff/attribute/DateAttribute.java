@@ -8,6 +8,9 @@ import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
 
+/**
+ * Representation of a Date attribute.
+ */
 public class DateAttribute extends AbstractAttribute<Date> {
     public final static SimpleDateFormat format = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss.SSSSSS''");
     /**
@@ -84,11 +87,25 @@ public class DateAttribute extends AbstractAttribute<Date> {
         };
     }
 
+    /**
+     * Whether the value of the instance is contained by the constraint connected to this attribute.
+     *
+     * @param constraint The constraint to verify.
+     * @param instance The instance to evaluate.
+     * @return Whether the value in the instance connected to this attribute is contained within the constraint.
+     */
     @Override
     public boolean contains(Constraint<Date> constraint, Instance instance) {
         return contains(constraint, (Date) instance.getValue(this));
     }
 
+    /**
+     * Whether the value is contained by the constraint connected to this attribute.
+     *
+     * @param constraint The constraint to verify.
+     * @param value The value to evaluate.
+     * @return Whether the value is contained within the constraint.
+     */
     @Override
     public boolean contains(Constraint<Date> constraint, Date value) {
         Date constraintValue = constraint.getValue();
