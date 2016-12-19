@@ -180,10 +180,6 @@ public class Core {
             Dataset dataset = Dataset.loadARFF(filePath, countNullAsZero, targetAttribute, targetValue, targetComparison, blacklist);
             System.out.println("P=" + dataset.getP() + ", N=" + dataset.getN() + ", P+N=" + (dataset.getP() + dataset.getN()) + ", Number of instances: " + dataset.getInstances().size());
 
-            for(AbstractAttribute attribute : dataset.getAttributes()) {
-                System.out.println(attribute);
-            }
-
             //Report on information about the settings.
             System.out.println("Blacklisted attributes: " + Arrays.toString(Core.blacklist).replaceAll("(\\{|\\})",""));
             System.out.println();
