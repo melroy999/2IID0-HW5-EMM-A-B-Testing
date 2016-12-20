@@ -194,6 +194,8 @@ public class Dataset {
             System.out.println(">>> WARNING: target attribute [" + targetAttribute + "] could not be found, taking last attribute on default.");
         }
 
+        System.out.println();
+
         return new Dataset(attributes, instances, relation, targetAttributeId, targetValue, targetComparison);
     }
 

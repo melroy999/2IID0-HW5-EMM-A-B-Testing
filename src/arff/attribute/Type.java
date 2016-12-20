@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
  * Enum holding different kind of value types we want to support.
  */
 public enum Type {
-    NUMERIC, BOOLEAN, SET, DATE, UUID;
+    NUMERIC, BOOLEAN, SET, UUID;
 
     private static final Pattern pattern = Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
 
@@ -31,26 +31,7 @@ public enum Type {
                 if(isUUID(split[0])) {
                     return UUID;
                 }
-                if(isTimeStampValid(split[0])) {
-                    return DATE;
-                }
                 return SET;
-        }
-    }
-
-    /**
-     * Check by parsing whether the input value can be seen as a timestamp.
-     *
-     * @param inputString The string to verify.
-     * @return True if the value could be parsed, false if an error was thrown.
-     */
-    public static boolean isTimeStampValid(String inputString) {
-        try {
-            DateAttribute.format.parse(inputString);
-            return true;
-        }
-        catch(ParseException e) {
-            return false;
         }
     }
 

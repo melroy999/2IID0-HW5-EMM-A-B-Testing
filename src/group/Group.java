@@ -352,6 +352,10 @@ public class Group implements Comparable<Group> {
      * @return The toString value of each constraint in the constraints list, combined with ∧.
      */
     public String getReadableConstraints() {
+        if(constraints.isEmpty()) {
+            return "{empty group}";
+        }
+
         String result = "";
         boolean isFirst = true;
         for(Constraint constraint : constraints) {

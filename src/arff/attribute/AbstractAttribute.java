@@ -484,8 +484,6 @@ public abstract class AbstractAttribute<T> {
                 return attribute;
             case SET:
                 return new SetAttribute(name, id, value);
-            case DATE:
-                return new DateAttribute(name, id);
             case UUID:
                 return new UUIDAttribute(name, id);
         }

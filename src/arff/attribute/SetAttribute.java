@@ -11,6 +11,7 @@ import java.util.Comparator;
 public class SetAttribute extends AbstractAttribute<String> {
     //The list of pre-defined values that are mentioned for this attribute.
     private final String valuesString;
+    private final int valueCount;
 
     /**
      * Create an attribute.
@@ -22,6 +23,7 @@ public class SetAttribute extends AbstractAttribute<String> {
     public SetAttribute(String name, int id, String valuesString) {
         super(name, id);
         this.valuesString = valuesString;
+        this.valueCount = valuesString.split(",").length;
     }
 
     /**
@@ -52,7 +54,7 @@ public class SetAttribute extends AbstractAttribute<String> {
      */
     @Override
     public Comparison[] getComparisons() {
-        return new Comparison[]{Comparison.EQ, Comparison.NEQ};
+        return valueCount == 2 ? new Comparison[]{Comparison.EQ} : new Comparison[]{Comparison.EQ, Comparison.NEQ};
     }
 
     /**
