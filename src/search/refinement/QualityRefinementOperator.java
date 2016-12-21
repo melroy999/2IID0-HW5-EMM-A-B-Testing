@@ -7,6 +7,7 @@ import group.Group;
 import search.quality.AbstractQualityMeasure;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,7 +31,7 @@ public class QualityRefinementOperator extends AbstractRefinementOperator {
 
         //Iterate over all attributes.
         for(AbstractAttribute attribute : dataset.getAttributes()) {
-            if(dataset.getTargetAttribute() == attribute) {
+            if(Arrays.asList(dataset.getTargetAttributes()).contains(attribute)) {
                 //Skip if the name is in the blacklist.
                 continue;
             }

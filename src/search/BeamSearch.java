@@ -68,14 +68,11 @@ public class BeamSearch {
         //A hashset that keeps the encountered group products.
         HashSet<BigInteger> encounteredGroups = new HashSet<>();
 
-        //The target attribute.
-        AbstractAttribute targetAttribute = dataset.getTargetAttribute();
-
-        //The constraint the target attribute uses.
-        Constraint constraint = dataset.getTargetConstraint();
+        //The target group.
+        Group targetGroup = dataset.getTargetGroup();
 
         //Determine which indices are in the positive set.
-        Set<Integer> positives = targetAttribute.getIndicesSubsetForValue(constraint);
+        Set<Integer> positives = targetGroup.getIndicesSubset();
 
         //Iterate for all levels.
         for(int level = 1; level <= d; level++) {

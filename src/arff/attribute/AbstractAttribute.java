@@ -3,6 +3,7 @@ package arff.attribute;
 import arff.Dataset;
 import arff.instance.Instance;
 import group.Comparison;
+import group.Group;
 import search.quality.AbstractQualityMeasure;
 import search.result.ConfusionMatrix;
 import util.SieveOfAtkin;
@@ -206,15 +207,24 @@ public abstract class AbstractAttribute<T> {
         //Get a subset of the indices set containing the values that are covered by the comparison and value combination.
         Set<Integer> indices = getIndicesSubsetForValue(constraint);
 
-        //The target attribute.
-        AbstractAttribute targetAttribute = dataset.getTargetAttribute();
+        //The target group.
+        Group targetGroup = dataset.getTargetGroup();
 
         //For each instance index.
         for(int index : indices) {
             Instance instance = instances.get(index);
 
+            boolean isContained = true;
+            for(Constraint groupConstraint : targetGroup.getConstraints()) {
+                //If it is not contained, set the correct flag.
+                if(!groupConstraint.contains(instance)) {
+                    isContained = false;
+                    break;
+                }
+            }
+
             //If the value is positive increment, decrement otherwise.
-            if(targetAttribute.matchesTargetValue(instance, dataset)) {
+            if(isContained) {
                 p++;
             } else {
                 n++;
@@ -226,8 +236,17 @@ public abstract class AbstractAttribute<T> {
             for(int i = nullStartIndex; i < instances.size(); i++) {
                 Instance instance = instances.get(i);
 
+                boolean isContained = true;
+                for(Constraint groupConstraint : targetGroup.getConstraints()) {
+                    //If it is not contained, set the correct flag.
+                    if(!groupConstraint.contains(instance)) {
+                        isContained = false;
+                        break;
+                    }
+                }
+
                 //If the value is positive increment, decrement otherwise.
-                if(targetAttribute.matchesTargetValue(instance, dataset)) {
+                if(isContained) {
                     up++;
                 } else {
                     un++;
@@ -496,16 +515,6 @@ public abstract class AbstractAttribute<T> {
      * @return A comparator using the correct type of sorting, based on the values it contains.
      */
     public abstract Comparator<Instance> getComparator();
-
-    /**
-     * Whether the instance matches the target value.
-     *
-     * @param instance The instance that has to be checked.
-     * @return Whether the instance target value matches the overall target value.
-     */
-    public boolean matchesTargetValue(Instance instance, Dataset dataset) {
-        return dataset.getTargetConstraint().contains(instance);
-    }
 
     /**
      * Get the prime number associated with this attribute.

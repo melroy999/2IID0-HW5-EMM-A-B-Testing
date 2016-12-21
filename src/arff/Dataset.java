@@ -4,12 +4,10 @@ import arff.attribute.AbstractAttribute;
 import arff.attribute.Constraint;
 import arff.instance.Instance;
 import group.Comparison;
+import group.Group;
 import util.FileLoader;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class Dataset {
     //The list of attributes within the dataset file.
@@ -25,11 +23,11 @@ public class Dataset {
     private final int P;
     private final int N;
 
-    //Get the target constraint.
-    private final Constraint targetConstraint;
+    //Get the target group.
+    private final Group targetGroup;
 
     //The target attribute.
-    private final AbstractAttribute targetAttribute;
+    private final AbstractAttribute[] targetAttributes;
 
     /**
      * Create a dataset.
@@ -37,45 +35,49 @@ public class Dataset {
      * @param attributes The list of attributes.
      * @param instances The list of instances.
      * @param relationName The name of the relation.
-     * @param targetId The id of the target attribute.
-     * @param targetValue The target value.
-     * @param comparison The comparison used relative to the target value.
+     * @param targetIds The ids of the target attributes.
+     * @param targetValues The target values.
+     * @param comparisons The comparisons used relative to the target values.
      */
-    public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int targetId, String targetValue, Comparison comparison) {
+    public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int[] targetIds, String[] targetValues, Comparison[] comparisons) {
         this.instances = instances;
         this.attributes = attributes;
         this.relationName = relationName;
 
-        this.targetAttribute = attributes.get(targetId);
+        this.targetAttributes = new AbstractAttribute[targetIds.length];
+        for(int i = 0; i < targetIds.length; i++) {
+            this.targetAttributes[i] = attributes.get(targetIds[i]);
+        }
 
         //Initialize all the attributes.
         for(AbstractAttribute attribute : attributes) {
             attribute.initialize(this);
         }
 
-        //Set the target constraint.
-        this.targetConstraint = targetAttribute.getConstraint(targetAttribute.getName() + " " + comparison + " " + targetAttribute.convertValue(targetValue));
+        //Set the target group.
+        Group targetGroup = new Group();
+        for(int i = 0; i < this.targetAttributes.length; i++) {
+            AbstractAttribute attribute = this.targetAttributes[i];
+            Comparison comparison = comparisons[i];
+            String targetValue = targetValues[i];
+            Constraint addition = attribute.getConstraint(attribute.getName() + " " + comparison + " " + attribute.convertValue(targetValue));
 
-        if(targetConstraint == null) {
-            throw new IllegalArgumentException("Target value " + targetValue + " or comparison mode " + comparison + " is invalid. The target attribute only supports the following comparisons: " + Arrays.toString(targetAttribute.getComparisons()) + ".");
-        }
-
-        //Intermediary counters.
-        int P = 0;
-        int N = 0;
-
-        //Count the amount of positive and negative cases.
-        for(Instance instance : instances) {
-            if(targetAttribute.matchesTargetValue(instance, this)) {
-                P++;
-            } else {
-                N++;
+            if(addition == null) {
+                throw new IllegalArgumentException("Target value " + targetValue + " or comparison mode " + comparison + " is invalid. The target attribute only supports the following comparisons: " + Arrays.toString(attribute.getComparisons()) + ".");
             }
+
+            targetGroup = targetGroup.extendGroupWith(addition, new HashSet<>());
         }
+
+        //Set the target group.
+        this.targetGroup = targetGroup;
+
+        //Count the amount of positive instances.
+        Set<Integer> indices = targetGroup.getIndicesSubset();
 
         //Set the P and N values.
-        this.P = P;
-        this.N = N;
+        this.P = indices.size();
+        this.N = instances.size() - indices.size();
     }
 
     /**
@@ -124,12 +126,12 @@ public class Dataset {
     }
 
     /**
-     * Get the target attribute.
+     * Get the target attributes.
      *
-     * @return The target attribute.
+     * @return The target attributes.
      */
-    public AbstractAttribute getTargetAttribute() {
-        return targetAttribute;
+    public AbstractAttribute[] getTargetAttributes() {
+        return targetAttributes;
     }
 
     //The lines of the file.
@@ -140,14 +142,14 @@ public class Dataset {
      *
      * @param filePath The path to the file we want to load.
      * @param countNullAsZero Whether we count null values as zero in numerical cases.
-     * @param targetAttribute Name of the target attribute.
-     * @param targetValue The target value.
-     * @param targetComparison The comparison to use relative to the target value.
+     * @param targetAttributes Name of the target attributes.
+     * @param targetValues The target values.
+     * @param targetComparisons The comparisons to use relative to the target values.
      * @param blacklist The blacklisted attributes.
      * @return The arff file as an object.
      * @throws Exception Throws an exception if the file cannot be loaded.
      */
-    public static Dataset loadARFF(String filePath, boolean countNullAsZero, String targetAttribute, String targetValue, Comparison targetComparison, HashSet<String> blacklist) throws Exception {
+    public static Dataset loadARFF(String filePath, boolean countNullAsZero, String[] targetAttributes, String[] targetValues, Comparison[] targetComparisons, HashSet<String> blacklist) throws Exception {
         lines.clear();
         lines.addAll(FileLoader.readAllLines(filePath));
 
@@ -177,26 +179,27 @@ public class Dataset {
             }
         }
 
-        //Set the temporary target attribute id.
-        int targetAttributeId = attributes.size() - 1;
-        boolean targetAttributeFound = false;
-        for(AbstractAttribute attribute : attributes) {
-            //Find a match to the target attribute.
-            if (attribute.getName().equals(targetAttribute)) {
-                targetAttributeFound = true;
-                targetAttributeId = attribute.getId();
-                break;
+        int[] targetAttributeIds = new int[targetAttributes.length];
+        for(int i = 0; i < targetAttributes.length; i++) {
+            String targetAttribute = targetAttributes[i];
+            boolean targetAttributeFound = false;
+            for (AbstractAttribute attribute : attributes) {
+                //Find a match to the target attribute.
+                if (attribute.getName().equals(targetAttribute)) {
+                    targetAttributeFound = true;
+                    targetAttributeIds[i] = attribute.getId();
+                    break;
+                }
             }
-        }
 
-        //Warn for default behavior.
-        if(!targetAttributeFound && !targetAttribute.equals("")) {
-            System.out.println(">>> WARNING: target attribute [" + targetAttribute + "] could not be found, taking last attribute on default.");
+            if (!targetAttributeFound) {
+                throw new IllegalArgumentException(">>> WARNING: target attribute [" + targetAttribute + "] could not be found.");
+            }
         }
 
         System.out.println();
 
-        return new Dataset(attributes, instances, relation, targetAttributeId, targetValue, targetComparison);
+        return new Dataset(attributes, instances, relation, targetAttributeIds, targetValues, targetComparisons);
     }
 
     /**
@@ -204,7 +207,7 @@ public class Dataset {
      *
      * @return The target constraint.
      */
-    public Constraint getTargetConstraint() {
-        return targetConstraint;
+    public Group getTargetGroup() {
+        return targetGroup;
     }
 }

@@ -32,10 +32,10 @@ public class Core {
     private static AbstractQualityMeasure QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
     private static boolean printCSVFormat = false;
     private static boolean countNullAsZero = false;
-    private static String targetAttribute = "";
+    private static String[] targetAttributes = new String[]{};
     private static String filePath = "";
-    private static String targetValue = "";
-    private static Comparison targetComparison = Comparison.EQ;
+    private static String[] targetValues = new String[]{};
+    private static Comparison[] targetComparisons = new Comparison[]{};
 
     /**
      * The main starter of the beam search, that reads the parameter input and sets the appropriate values.
@@ -65,10 +65,10 @@ public class Core {
             QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
             blacklist = new String[]{"decision","decision_o"};
             countNullAsZero = false;
-            targetAttribute = "match";
+            targetAttributes = new String[]{"match"};
             filePath = "data/dataset.arff";
-            targetValue = "1";
-            targetComparison = Comparison.EQ;
+            targetValues = new String[]{"1"};
+            targetComparisons = new Comparison[]{Comparison.EQ};
         } else {
             System.out.println("Arguments: " + Arrays.toString(args));
             for(int i = 0; i < args.length; i++) {
@@ -88,6 +88,7 @@ public class Core {
                         //Increment i as well.
                         String value = args[i + 1].toLowerCase();
                         i++;
+                        String[] split;
 
                         switch (v) {
                             case "d":
@@ -97,31 +98,42 @@ public class Core {
                                 SEARCH_WIDTH = Integer.valueOf(value);
                                 break;
                             case "target":
-                                targetAttribute = value;
+                                //The target values have to be formatted as follows:
+                                //attribute,value,attribute2,value2, etc
 
-                                //We have another value for the target.
-                                targetValue = args[i + 1];
-                                i++;
+                                split = value.split(",");
+                                targetAttributes = new String[split.length / 2];
+                                targetValues = new String[split.length / 2];
+                                for(int k = 0; k < split.length / 2; k++) {
+                                    targetAttributes[k] = split[k * 2];
+                                    targetValues[k] = split[k * 2 + 1];
+                                }
+
                                 break;
                             case "set-length":
                                 RESULT_SET_LENGTH = Integer.valueOf(value);
                                 break;
                             case "target-comparison":
-                                switch (value) {
-                                    case "eq":
-                                        targetComparison = Comparison.EQ;
-                                        break;
-                                    case "neq":
-                                        targetComparison = Comparison.NEQ;
-                                        break;
-                                    case "lteq":
-                                        targetComparison = Comparison.LTEQ;
-                                        break;
-                                    case "gteq":
-                                        targetComparison = Comparison.GTEQ;
-                                        break;
-                                    default:
-                                        System.out.println("Taking EQ on default, as the given comparator could not be found.");
+                                split = value.split(",");
+                                targetComparisons = new Comparison[split.length];
+
+                                for(int k = 0; k < split.length; k++) {
+                                    switch (split[k]) {
+                                        case "eq":
+                                            targetComparisons[k] = Comparison.EQ;
+                                            break;
+                                        case "neq":
+                                            targetComparisons[k] = Comparison.NEQ;
+                                            break;
+                                        case "lteq":
+                                            targetComparisons[k] = Comparison.LTEQ;
+                                            break;
+                                        case "gteq":
+                                            targetComparisons[k] = Comparison.GTEQ;
+                                            break;
+                                        default:
+                                            System.out.println("Taking EQ on default, as the given comparator " + split[k] + " could not be found.");
+                                    }
                                 }
                                 break;
                             case "min-group-size":
@@ -169,7 +181,7 @@ public class Core {
             }
         }
 
-        assert !targetAttribute.equals("");
+        assert targetAttributes.length != 0;
 
         System.out.println("Taking values SEARCH_DEPTH = " + SEARCH_DEPTH + ", SEARCH_WIDTH = " + SEARCH_WIDTH + ", RESULT_SET_LENGTH = " + RESULT_SET_LENGTH + ", MINIMUM_GROUP_SIZE = " + MINIMUM_GROUP_SIZE + ", MAXIMUM_FRACTION = " + MAXIMUM_FRACTION + ", USE_THREADS = " + USE_THREADS + ".");
         try {
@@ -177,7 +189,7 @@ public class Core {
             blacklist.addAll(Arrays.asList(Core.blacklist));
 
             //Load the data from the given data file.
-            Dataset dataset = Dataset.loadARFF(filePath, countNullAsZero, targetAttribute, targetValue, targetComparison, blacklist);
+            Dataset dataset = Dataset.loadARFF(filePath, countNullAsZero, targetAttributes, targetValues, targetComparisons, blacklist);
             System.out.println("P=" + dataset.getP() + ", N=" + dataset.getN() + ", P+N=" + (dataset.getP() + dataset.getN()) + ", Number of instances: " + dataset.getInstances().size());
 
             int uniqueValues = 0;
@@ -194,7 +206,7 @@ public class Core {
             System.out.println("Quality measure:\t\t\t[" + QUALITY_MEASURE.getName() + "] with minimum quality value " + QUALITY_MEASURE.getMinimumValue());
             System.out.println("Quality measure formula:\t" + QUALITY_MEASURE.getFormula());
             System.out.println("Refinement Operator:\t\t[" + REFINEMENT_OPERATOR.getName() + "]");
-            System.out.println("Target attribute: \t\t\t[" + dataset.getTargetAttribute().getName() + "] with constraint [" + dataset.getTargetConstraint() + "]");
+            System.out.println("Target group: \t\t\t[" + dataset.getTargetGroup().getReadableConstraints() + "]");
             System.out.println();
             Date start = new Date();
 
@@ -273,10 +285,10 @@ public class Core {
         QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
         printCSVFormat = false;
         countNullAsZero = false;
-        targetAttribute = "";
+        targetAttributes = new String[0];
         filePath = "";
-        targetValue = "";
-        targetComparison = Comparison.EQ;
+        targetValues = new String[0];
+        targetComparisons = new Comparison[0];
     }
 
     /**
@@ -286,7 +298,7 @@ public class Core {
         System.out.println("Parameters used to instantiate a beam search: ");
         System.out.println("\t-dataset-file value: The path to the dataset file. (MANDATORY)");
         System.out.println();
-        System.out.println("\t-target value value2: The first value is the name of the target attribute. The second value is the actual value that is targeted within the attribute. (MANDATORY)");
+        System.out.println("\t-target attribute,value,attribute2,value2,etc: The attribute with the cutoff values have to be inserted in pairs. (MANDATORY)");
         System.out.println();
         System.out.println("\t-T: Enable multi-threading. By enabling this, the program will use 8 threads during the beam search, which gives a considerable performance increase.");
         System.out.println();
@@ -300,8 +312,8 @@ public class Core {
         System.out.println();
         System.out.println("\t-set-length value: The size of the returned priority queue. (default value: " + RESULT_SET_LENGTH + ")");
         System.out.println();
-        System.out.println("\t-target-comparison value: Set the comparison mode that determines whether the instance is a match with the target value.");
-        System.out.println("\t\tMust be one of the following: {EQ,NEQ,LTEQ,GTEQ} (default value: " + targetComparison + ")");
+        System.out.println("\t-target-comparison value,value2,etc: Set the comparison mode that determines whether the instance is a match with the target value.");
+        System.out.println("\t\tMust be one of the following: {EQ,NEQ,LTEQ,GTEQ}");
         System.out.println("\t\t\tEQ: " + Comparison.EQ + ", NEQ: " + Comparison.NEQ + ", LTEQ: " + Comparison.LTEQ + ", GTEQ: " + Comparison.GTEQ);
         System.out.println();
         System.out.println("\t-min-group-size value: The minimum coverage a subgroup should have. (default value: " + MINIMUM_GROUP_SIZE + ")");
