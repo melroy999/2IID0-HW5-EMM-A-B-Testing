@@ -202,7 +202,7 @@ public class Core {
             System.out.println("Quality measure:\t\t\t[" + QUALITY_MEASURE.getName() + "] with minimum quality value " + QUALITY_MEASURE.getMinimumValue());
             System.out.println("Quality measure formula:\t" + QUALITY_MEASURE.getFormula());
             System.out.println("Refinement Operator:\t\t[" + REFINEMENT_OPERATOR.getName() + "]");
-            System.out.println("Target group: \t\t\t[" + dataset.getTargetGroup().getReadableConstraints() + "]");
+            System.out.println("Target group: \t\t\t\t[" + dataset.getTargetGroup().getReadableConstraints() + "]");
             System.out.println();
             Date start = new Date();
 

@@ -201,6 +201,15 @@ public class Group implements Comparable<Group> {
         this.evaluation = evaluation;
     }
 
+    /**
+     * Get the confusion matrix of this group.
+     *
+     * @param dataset The dataset.
+     * @param seedIndices The indices that are contained within the seed group.
+     * @param seedNullInstances The null instances that are contained within the seed group.
+     * @param positives The positive instances in the dataset.
+     * @return A confusion matrix with the correct counts.
+     */
     public ConfusionMatrix getConfusionMatrix(Dataset dataset, Set<Integer> seedIndices, Set<Integer> seedNullInstances, Set<Integer> positives) {
         //Last addition:
         Constraint newConstraint = constraints.peekLast();
