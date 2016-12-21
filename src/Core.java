@@ -86,7 +86,7 @@ public class Core {
                     } else {
                         //Get the next value.
                         //Increment i as well.
-                        String value = args[i + 1].toLowerCase();
+                        String value = args[i + 1];
                         i++;
                         String[] split;
 
@@ -118,7 +118,7 @@ public class Core {
                                 targetComparisons = new Comparison[split.length];
 
                                 for(int k = 0; k < split.length; k++) {
-                                    switch (split[k]) {
+                                    switch (split[k].toLowerCase()) {
                                         case "eq":
                                             targetComparisons[k] = Comparison.EQ;
                                             break;
@@ -149,7 +149,7 @@ public class Core {
                                 filePath = value;
                                 break;
                             case "refinement-operator":
-                                switch (value) {
+                                switch (value.toLowerCase()) {
                                     case "sro": REFINEMENT_OPERATOR = new SimpleRefinementOperator();
                                         break;
                                     case "qro": REFINEMENT_OPERATOR = new QualityRefinementOperator();
@@ -160,7 +160,7 @@ public class Core {
                                 //We have another value for the quality measure.
                                 double minQuality = Double.valueOf(args[i + 1].toLowerCase());
 
-                                switch (value) {
+                                switch (value.toLowerCase()) {
                                     case "wra": QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(minQuality);
                                         break;
                                     case "sen": QUALITY_MEASURE = new SensitivityQualityMeasure(minQuality);
