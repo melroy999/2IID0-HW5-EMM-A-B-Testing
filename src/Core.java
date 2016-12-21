@@ -99,26 +99,16 @@ public class Core {
                                 break;
                             case "target":
                                 //The target values have to be formatted as follows:
-                                //attribute,value,attribute2,value2, etc
+                                //attribute,comparison,value,attribute2,comparison2,value2, etc
 
                                 split = value.split(",");
-                                targetAttributes = new String[split.length / 2];
-                                targetValues = new String[split.length / 2];
-                                for(int k = 0; k < split.length / 2; k++) {
-                                    targetAttributes[k] = split[k * 2];
-                                    targetValues[k] = split[k * 2 + 1];
-                                }
+                                targetAttributes = new String[split.length / 3];
+                                targetComparisons = new Comparison[split.length / 3];
+                                targetValues = new String[split.length / 3];
 
-                                break;
-                            case "set-length":
-                                RESULT_SET_LENGTH = Integer.valueOf(value);
-                                break;
-                            case "target-comparison":
-                                split = value.split(",");
-                                targetComparisons = new Comparison[split.length];
-
-                                for(int k = 0; k < split.length; k++) {
-                                    switch (split[k].toLowerCase()) {
+                                for(int k = 0; k < split.length / 3; k++) {
+                                    targetAttributes[k] = split[k * 3];
+                                    switch (split[k * 3 + 1].toLowerCase()) {
                                         case "eq":
                                             targetComparisons[k] = Comparison.EQ;
                                             break;
@@ -133,8 +123,14 @@ public class Core {
                                             break;
                                         default:
                                             System.out.println("Taking EQ on default, as the given comparator " + split[k] + " could not be found.");
+                                            targetComparisons[k] = Comparison.EQ;
                                     }
+                                    targetValues[k] = split[k * 3 + 2];
                                 }
+
+                                break;
+                            case "set-length":
+                                RESULT_SET_LENGTH = Integer.valueOf(value);
                                 break;
                             case "min-group-size":
                                 MINIMUM_GROUP_SIZE = Integer.valueOf(value);
@@ -298,7 +294,7 @@ public class Core {
         System.out.println("Parameters used to instantiate a beam search: ");
         System.out.println("\t-dataset-file value: The path to the dataset file. (MANDATORY)");
         System.out.println();
-        System.out.println("\t-target attribute,value,attribute2,value2,etc: The attribute with the cutoff values have to be inserted in pairs. (MANDATORY)");
+        System.out.println("\t-target attribute,comparison,value,attribute2,comparison2,value2,etc: The attribute with the cutoff values have to be inserted in trios. Here the comparison has to be one of the following: Must be one of the following: {EQ,NEQ,LTEQ,GTEQ}. (MANDATORY)");
         System.out.println();
         System.out.println("\t-T: Enable multi-threading. By enabling this, the program will use 8 threads during the beam search, which gives a considerable performance increase.");
         System.out.println();
@@ -312,15 +308,11 @@ public class Core {
         System.out.println();
         System.out.println("\t-set-length value: The size of the returned priority queue. (default value: " + RESULT_SET_LENGTH + ")");
         System.out.println();
-        System.out.println("\t-target-comparison value,value2,etc: Set the comparison mode that determines whether the instance is a match with the target value.");
-        System.out.println("\t\tMust be one of the following: {EQ,NEQ,LTEQ,GTEQ}");
-        System.out.println("\t\t\tEQ: " + Comparison.EQ + ", NEQ: " + Comparison.NEQ + ", LTEQ: " + Comparison.LTEQ + ", GTEQ: " + Comparison.GTEQ);
-        System.out.println();
         System.out.println("\t-min-group-size value: The minimum coverage a subgroup should have. (default value: " + MINIMUM_GROUP_SIZE + ")");
         System.out.println();
         System.out.println("\t-max-group-size-fraction value: The maximum coverage that a subgroup may have relative to the size of the dataset. This value should be a fraction. (default value: " + MAXIMUM_FRACTION + ")");
         System.out.println();
-        System.out.println("\t-blacklist value: A list of attributes (without spaces, seperated by commas) that should be ignored.");
+        System.out.println("\t-blacklist value: A list of attributes (without spaces, separated by commas) that should be ignored.");
         System.out.println("\tExample: \'-blacklist decision,decision_o\'");
         System.out.println();
         System.out.println("\t-refinement-operator value: The type of refinement operator to use.");

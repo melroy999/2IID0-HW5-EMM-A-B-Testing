@@ -26,7 +26,7 @@ public class VirtualRunner {
             Core.main(arguments);
         }*/
 
-        String[] arguments = new String[]{"-quality-measure", "WRA", "0.0", "-t", "-d", "1", "-w", "20", "-set-length", "20","-null-is-zero","-target","action,clic,condition,2-Buttony-Conversion-Buttons","-dataset-file","data/collective_data_5.arff", "-target-comparison","EQ,EQ","-blacklist", "page_url,refr_source,geo_region,dvce_ismobile,page_title,dvce_created_tstamp,domain_sessionidx,platform,collector_tstamp,browser_colordepth,etl_tstamp,domain_userid,geo_timezone,geo_city,event,browser_language,root_tstamp,browser_cookies,experiment_id,experiment_collector_tstamp,event_id,user_id,domain_sessionid,geo_region_name,page_referrer,dvce_type,os_timezone"};
+        String[] arguments = new String[]{"-quality-measure", "WRA", "0.0", "-t", "-d", "1", "-w", "20", "-set-length", "20","-null-is-zero","-target","action,EQ,clic,condition,EQ,2-Buttony-Conversion-Buttons","-dataset-file","data/collective_data_5.arff","-blacklist", "page_url,refr_source,geo_region,dvce_ismobile,page_title,dvce_created_tstamp,domain_sessionidx,platform,collector_tstamp,browser_colordepth,etl_tstamp,domain_userid,geo_timezone,geo_city,event,browser_language,root_tstamp,browser_cookies,experiment_id,experiment_collector_tstamp,event_id,user_id,domain_sessionid,geo_region_name,page_referrer,dvce_type,os_timezone"};
         Core.main(arguments);
 
         //, -blacklist, platform,etl_tstamp,collector_tstamp,dvce_created_tstamp,event_id,domain_userid,domain_sessionidx,domain_sessionid,user_id,
