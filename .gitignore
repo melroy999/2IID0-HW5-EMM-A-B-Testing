@@ -5,6 +5,7 @@
 !/src/
 !/resources/
 !/data/
+!/matlab_analyzation_scripts/
 
 # Except for the following files:
 !.gitignore

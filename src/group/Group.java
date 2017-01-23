@@ -372,7 +372,7 @@ public class Group implements Comparable<Group> {
                 result += constraint.toString();
                 isFirst = false;
             } else {
-                result += " \u2227 " + constraint.toString();
+                result += " && " + constraint.toString();
             }
         }
         return result;

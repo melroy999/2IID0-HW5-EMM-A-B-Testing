@@ -14,10 +14,10 @@ public enum Comparison {
     @Override
     public String toString() {
         switch (this) {
-            case GTEQ: return "\u2265";
-            case LTEQ: return "\u2264";
+            case GTEQ: return ">=";
+            case LTEQ: return "<=";
             case EQ: return "=";
-            default: return "\u2260";
+            default: return "!=";
         }
     }
 }
