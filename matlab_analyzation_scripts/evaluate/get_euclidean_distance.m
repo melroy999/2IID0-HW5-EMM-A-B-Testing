@@ -5,7 +5,7 @@ function score = get_euclidean_distance(V, beta_original)
     
     %Calculate the beta score.
     score = 0;
-    for i=1:6
+    for i=1:length(beta_original)
         score = score + (beta_subgroup(i) - beta_original(i))^2;
     end
 end

@@ -1,7 +1,7 @@
 %Get the beta vector of the data.
 function beta = get_beta_vector(V)
-    X = [ones(length(V),1) V(:,1:6)];
-    Y = V(:,7);
+    X = [ones(length(V),1) V(:,1:end-1)];
+    Y = V(:,end);
     
     X_T_X = X.' * X;
     X_T_X_inv = inv(X_T_X);
