@@ -4,8 +4,7 @@ import arff.Dataset;
 import arff.instance.Instance;
 import group.Comparison;
 import group.Group;
-import search.quality.AbstractQualityMeasure;
-import search.result.ConfusionMatrix;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import util.SieveOfAtkin;
 
 import javax.xml.crypto.Data;
@@ -26,9 +25,6 @@ public abstract class AbstractAttribute<T> {
 
     //The id of the attribute.
     private final int id;
-
-    //The list of confusion matrices.
-    private final HashMap<BigInteger, ConfusionMatrix> constraintToConfusionMatrix = new HashMap<>();
 
     //The list of constraint quality results.
     private final HashMap<BigInteger, Double> constraintToEvaluation = new HashMap<>();
@@ -171,91 +167,30 @@ public abstract class AbstractAttribute<T> {
      * Initializes the attribute information sources.
      *
      * @param dataset The dataset file.
-     * @param qualityMeasure The quality measure to use.
      */
-    public void initializeConfusionMatrices(Dataset dataset, AbstractQualityMeasure qualityMeasure) {
+    public void initializeConstraintEvaluations(Dataset dataset) {
         //Create the constraints.
         for(Constraint<T> constraint : constraints) {
-            //Get the confusion matrix.
-            ConfusionMatrix confusionMatrix = calculateConfusionMatrix(constraint, dataset);
-
-            //Add the confusion matrix.
-            addConfusionMatrix(constraint, confusionMatrix);
-
             //Add the score of the confusion matrix.
-            constraintToEvaluation.put(constraint.getProduct(), qualityMeasure.evaluate(confusionMatrix.p, confusionMatrix.n, confusionMatrix.P, confusionMatrix.N));
+            //TODO implement the quality measure.
+            constraintToEvaluation.put(constraint.getProduct(), getConstraintEvaluation(constraint, dataset));
+            throw new NotImplementedException();
         }
     }
 
     /**
-     * Calculate the confusion matrix.
+     * Calculate the quality of the constraint.
      *
      * @param constraint The constraint that is used.
      * @param dataset The dataset file.
-     * @return The confusion matrix of the constraint on this attribute.
+     * @return The quality of the constraint.
      */
-    private ConfusionMatrix calculateConfusionMatrix(Constraint<T> constraint, Dataset dataset) {
-        //The list of instances.
-        List<Instance> instances = dataset.getInstances();
+    public double getConstraintEvaluation(Constraint<T> constraint, Dataset dataset) {
+        //Get the indices that are within the constraint.
+        Set<Integer> indices = constraint.getIndicesSubsetForValue();
 
-        //Initialize the counters used for the confusion matrix.
-        double p = 0;
-        double n = 0;
-        double up = 0;
-        double un = 0;
-
-        //Get a subset of the indices set containing the values that are covered by the comparison and value combination.
-        Set<Integer> indices = getIndicesSubsetForValue(constraint);
-
-        //The target group.
-        Group targetGroup = dataset.getTargetGroup();
-
-        //For each instance index.
-        for(int index : indices) {
-            Instance instance = instances.get(index);
-
-            boolean isContained = true;
-            for(Constraint groupConstraint : targetGroup.getConstraints()) {
-                //If it is not contained, set the correct flag.
-                if(!groupConstraint.contains(instance)) {
-                    isContained = false;
-                    break;
-                }
-            }
-
-            //If the value is positive increment, decrement otherwise.
-            if(isContained) {
-                p++;
-            } else {
-                n++;
-            }
-        }
-
-        //Iterate over null cases, but only if the nullStartIndex is actually set.
-        if(nullStartIndex != -1) {
-            for(int i = nullStartIndex; i < instances.size(); i++) {
-                Instance instance = instances.get(i);
-
-                boolean isContained = true;
-                for(Constraint groupConstraint : targetGroup.getConstraints()) {
-                    //If it is not contained, set the correct flag.
-                    if(!groupConstraint.contains(instance)) {
-                        isContained = false;
-                        break;
-                    }
-                }
-
-                //If the value is positive increment, decrement otherwise.
-                if(isContained) {
-                    up++;
-                } else {
-                    un++;
-                }
-            }
-        }
-
-        //Create the confusion matrix.
-        return new ConfusionMatrix(p, n, up, un, dataset.getP(), dataset.getN());
+        //Let the dataset evaluate the indices that are retained. We only care about the evaluation value.
+        return dataset.getIndicesEvaluation(indices).evaluationValue;
     }
 
     /**
@@ -419,16 +354,6 @@ public abstract class AbstractAttribute<T> {
     public abstract Comparison[] getComparisons();
 
     /**
-     * Get the confusion matrix of the comparison and the instance.
-     *
-     * @param constraint The constraint used.
-     * @return The confusion matrix connected to the value and the comparison.
-     */
-    public ConfusionMatrix getConfusionMatrix(Constraint<T> constraint) {
-        return constraintToConfusionMatrix.get(constraint.getProduct());
-    }
-
-    /**
      * Get the quality of the single constraint.
      *
      * @param constraint The constraint used.
@@ -436,16 +361,6 @@ public abstract class AbstractAttribute<T> {
      */
     public Double getConstraintEvaluation(Constraint<T> constraint) {
         return constraintToEvaluation.get(constraint.getProduct());
-    }
-
-    /**
-     * Add a confusion matrix to the collection of confusion matrices.
-     *
-     * @param constraint The constraint used.
-     * @param confusionMatrix The confusion matrix itself.
-     */
-    private void addConfusionMatrix(Constraint<T> constraint, ConfusionMatrix confusionMatrix) {
-        constraintToConfusionMatrix.put(constraint.getProduct(), confusionMatrix);
     }
 
     /**

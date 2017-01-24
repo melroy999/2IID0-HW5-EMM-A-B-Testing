@@ -2,9 +2,7 @@ package search;
 
 import arff.Dataset;
 import arff.attribute.AbstractAttribute;
-import arff.attribute.Constraint;
 import group.Group;
-import search.quality.AbstractQualityMeasure;
 import search.refinement.AbstractRefinementOperator;
 import util.GroupPriorityQueue;
 
@@ -24,6 +22,8 @@ public class BeamSearch {
     private final double maximumCoverageFraction;
     private final boolean multiThreading;
 
+    private final double minimumQuality = 0;
+
     /**
      * Create the beam search object, with the given parameters.
      *
@@ -41,7 +41,6 @@ public class BeamSearch {
      * Do a beam search.
      *
      * @param dataset The dataset to use.
-     * @param qualityMeasure The quality measure to use.
      * @param refinementOperator The refinement operator to use.
      * @param w The search width.
      * @param d The seardh depth.
@@ -49,13 +48,13 @@ public class BeamSearch {
      * @return A "Priority queue" of maximum size "resultSetSize" containing the best subgroups in order of evaluation value.
      * @throws InterruptedException When a thread is interrupted.
      */
-    public GroupPriorityQueue search(Dataset dataset, AbstractQualityMeasure qualityMeasure, AbstractRefinementOperator refinementOperator, int w, int d, int resultSetSize) throws InterruptedException {
+    public GroupPriorityQueue search(Dataset dataset, AbstractRefinementOperator refinementOperator, int w, int d, int resultSetSize) throws InterruptedException {
         //Create the executor.
         executor = Executors.newFixedThreadPool(8);
 
         //Initialize all the attributes.
         for(AbstractAttribute attribute : dataset.getAttributes()) {
-            attribute.initializeConfusionMatrices(dataset, qualityMeasure);
+            attribute.initializeConstraintEvaluations(dataset);
         }
 
         //Create a candidate queue, and add the empty seed as the first element.
@@ -67,12 +66,6 @@ public class BeamSearch {
 
         //A hashset that keeps the encountered group products.
         HashSet<BigInteger> encounteredGroups = new HashSet<>();
-
-        //The target group.
-        Group targetGroup = dataset.getTargetGroup();
-
-        //Determine which indices are in the positive set.
-        Set<Integer> positives = targetGroup.getIndicesSubset();
 
         //Iterate for all levels.
         for(int level = 1; level <= d; level++) {
@@ -89,20 +82,17 @@ public class BeamSearch {
                 //All groups are based on the seed, so we should save the information of the seed, and use this for further calculations.
                 Set<Integer> seedIndices = seed.getIndicesSubset();
 
-                //The null seeds.
-                Set<Integer> seedNullIndices = seed.getNullIndicesSubset();
-
                 System.out.println("\tEvaluating seed " + seed);
                 //System.out.println("\t\tConfusionTable: " + seed.getConfusionMatrix());
 
                 //Get the candidate subgroups from the seed.
-                Set<Group> groups = refinementOperator.generate(seed, dataset, qualityMeasure, encounteredGroups);
+                Set<Group> groups = refinementOperator.generate(seed, dataset, encounteredGroups, minimumQuality);
 
                 //Iterate over all the groups, do this with multithreading if desired.
                 if(multiThreading) {
-                    iterateOverGroupsThreaded(dataset, qualityMeasure, resultSet, positives, beam, seedIndices, seedNullIndices, groups);
+                    iterateOverGroupsThreaded(dataset, resultSet, beam, seedIndices, groups);
                 } else {
-                    iterateOverGroups(dataset, qualityMeasure, resultSet, positives, beam, seedIndices, seedNullIndices, groups);
+                    iterateOverGroups(dataset, resultSet, beam, seedIndices, groups);
                 }
             }
 
@@ -123,24 +113,22 @@ public class BeamSearch {
      * A simple implementation of iterating over groups, without multithreading.
      *
      * @param dataset The dataset to use.
-     * @param qualityMeasure The quality measure to use.
      * @param resultSet The result priority queue.
-     * @param positives The set of indices of instances that are evaluated positive with the target.
      * @param beam The beam object to use during the search.
      * @param seedIndices The indices that are part of the seed group.
-     * @param seedNullIndices The indices that were null in the seed group.
      * @param groups The set of groups to iterate over.
      */
-    private void iterateOverGroups(Dataset dataset, AbstractQualityMeasure qualityMeasure, GroupPriorityQueue resultSet, Set<Integer> positives, GroupPriorityQueue beam, Set<Integer> seedIndices, Set<Integer> seedNullIndices, Set<Group> groups) {
+    private void iterateOverGroups(Dataset dataset, GroupPriorityQueue resultSet, GroupPriorityQueue beam, Set<Integer> seedIndices, Set<Group> groups) {
         //Iterate over all these groups.
         for(Group group : groups) {
             //System.out.println(Util.getCurrentTimeStamp() + " Evaluating seed " + group);
 
             //Get the quality.
-            double quality = group.evaluateQuality(qualityMeasure, dataset, seedIndices, seedNullIndices, positives);
+            double quality = group.evaluateQuality(dataset, seedIndices);
 
+            //TODO implement constraints.
             //If the group satisfies all constraints.
-            if(quality > qualityMeasure.getMinimumValue() && group.getConfusionMatrix().getCoverage() > minimumCoverage && group.getConfusionMatrix().getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
+            if(quality > minimumQuality && group.getCoverage() > minimumCoverage && group.getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
                 //Add it to the result set.
                 resultSet.add(group);
 
@@ -154,15 +142,12 @@ public class BeamSearch {
      * Iterating over groups with multithreading.
      *
      * @param dataset The dataset to use.
-     * @param qualityMeasure The quality measure to use.
      * @param resultSet The result priority queue.
-     * @param positives The set of indices of instances that are evaluated positive with the target.
      * @param beam The beam object to use during the search.
      * @param seedIndices The indices that are part of the seed group.
-     * @param seedNullIndices The indices that were null in the seed group.
      * @param groups The set of groups to iterate over.
      */
-    private void iterateOverGroupsThreaded(Dataset dataset, AbstractQualityMeasure qualityMeasure, GroupPriorityQueue resultSet, Set<Integer> positives, GroupPriorityQueue beam, Set<Integer> seedIndices, Set<Integer> seedNullIndices, Set<Group> groups) throws InterruptedException {
+    private void iterateOverGroupsThreaded(Dataset dataset, GroupPriorityQueue resultSet, GroupPriorityQueue beam, Set<Integer> seedIndices, Set<Group> groups) throws InterruptedException {
         //Create a collection of callables that have to be ran.
         Collection<Callable<Group>> callables = new ArrayList<>();
 
@@ -178,12 +163,13 @@ public class BeamSearch {
                 @Override
                 public Group call() throws Exception {
                     //Get the quality.
-                    double quality = group.evaluateQuality(qualityMeasure, dataset, seedIndices, seedNullIndices, positives);
+                    double quality = group.evaluateQuality(dataset, seedIndices);
 
+                    //TODO implement constraints.
                     //If the group satisfies all constraints.
-                    if(quality > qualityMeasure.getMinimumValue() && group.getConfusionMatrix().getCoverage() > minimumCoverage && group.getConfusionMatrix().getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
+                    if(quality > minimumQuality && group.getCoverage() > minimumCoverage && group.getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
                         //Add it to the result set.
-                        boolean succesfull = resultSet.add(group);
+                        resultSet.add(group);
 
                         //Insert it into the beam.
                         beam.add(group);

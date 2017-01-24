@@ -1,9 +1,7 @@
 import arff.Dataset;
 import arff.attribute.AbstractAttribute;
-import group.Comparison;
 import group.Group;
 import search.BeamSearch;
-import search.quality.*;
 import search.refinement.AbstractRefinementOperator;
 import search.refinement.QualityRefinementOperator;
 import search.refinement.SimpleRefinementOperator;
@@ -20,7 +18,6 @@ import java.util.HashSet;
  */
 public class Core {
     //Parameters that define a beam search.
-    private static final int DECIMAL_PLACES = 6;
     private static int SEARCH_DEPTH = 1;
     private static int SEARCH_WIDTH = 10;
     private static int RESULT_SET_LENGTH = 100;
@@ -29,13 +26,11 @@ public class Core {
     private static String[] blacklist = new String[]{};
     private static boolean USE_THREADS = false;
     private static AbstractRefinementOperator REFINEMENT_OPERATOR = new QualityRefinementOperator();
-    private static AbstractQualityMeasure QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
-    private static boolean printCSVFormat = false;
     private static boolean countNullAsZero = false;
-    private static String[] targetAttributes = new String[]{};
     private static String filePath = "";
-    private static String[] targetValues = new String[]{};
-    private static Comparison[] targetComparisons = new Comparison[]{};
+
+    private static String yTarget;
+    private static String[] xTargets;
 
     /**
      * The main starter of the beam search, that reads the parameter input and sets the appropriate values.
@@ -55,6 +50,7 @@ public class Core {
         restoreDefaults();
 
         if(args.length == 0) {
+            //<editor-fold desc="Default initialization">
             //Set the default values.
             USE_THREADS = true;
             MAXIMUM_FRACTION = 0.9;
@@ -62,14 +58,14 @@ public class Core {
             SEARCH_DEPTH = 2;
             SEARCH_WIDTH = 25;
             REFINEMENT_OPERATOR = new QualityRefinementOperator();
-            QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
             blacklist = new String[]{"decision","decision_o"};
             countNullAsZero = false;
-            targetAttributes = new String[]{"match"};
-            filePath = "data/dataset.arff";
-            targetValues = new String[]{"1"};
-            targetComparisons = new Comparison[]{Comparison.EQ};
+            filePath = "data/speed_dating_altered.arff";
+            yTarget = "like";
+            xTargets = new String[]{"attractive_partner","sincere_partner","intelligence_partner","funny_partner","ambition_partner","shared_interests_partner"};
+            //</editor-fold>
         } else {
+            //<editor-fold desc="Parameterized initialization">
             System.out.println("Arguments: " + Arrays.toString(args));
             for(int i = 0; i < args.length; i++) {
                 String arg = args[i];
@@ -79,8 +75,6 @@ public class Core {
 
                     if(v.equalsIgnoreCase("T")) {
                         USE_THREADS = true;
-                    } else if(v.equalsIgnoreCase("csv")) {
-                        printCSVFormat = true;
                     } else if(v.equalsIgnoreCase("null-is-zero")) {
                         countNullAsZero = true;
                     } else {
@@ -88,7 +82,6 @@ public class Core {
                         //Increment i as well.
                         String value = args[i + 1];
                         i++;
-                        String[] split;
 
                         switch (v) {
                             case "d":
@@ -97,37 +90,11 @@ public class Core {
                             case "w":
                                 SEARCH_WIDTH = Integer.valueOf(value);
                                 break;
-                            case "target":
-                                //The target values have to be formatted as follows:
-                                //attribute,comparison,value,attribute2,comparison2,value2, etc
-
-                                split = value.split(",");
-                                targetAttributes = new String[split.length / 3];
-                                targetComparisons = new Comparison[split.length / 3];
-                                targetValues = new String[split.length / 3];
-
-                                for(int k = 0; k < split.length / 3; k++) {
-                                    targetAttributes[k] = split[k * 3];
-                                    switch (split[k * 3 + 1].toLowerCase()) {
-                                        case "eq":
-                                            targetComparisons[k] = Comparison.EQ;
-                                            break;
-                                        case "neq":
-                                            targetComparisons[k] = Comparison.NEQ;
-                                            break;
-                                        case "lteq":
-                                            targetComparisons[k] = Comparison.LTEQ;
-                                            break;
-                                        case "gteq":
-                                            targetComparisons[k] = Comparison.GTEQ;
-                                            break;
-                                        default:
-                                            System.out.println("Taking EQ on default, as the given comparator " + split[k] + " could not be found.");
-                                            targetComparisons[k] = Comparison.EQ;
-                                    }
-                                    targetValues[k] = split[k * 3 + 2];
-                                }
-
+                            case "y-target":
+                                yTarget = value;
+                                break;
+                            case "x-targets":
+                                xTargets = value.split(",");
                                 break;
                             case "set-length":
                                 RESULT_SET_LENGTH = Integer.valueOf(value);
@@ -152,32 +119,14 @@ public class Core {
                                         break;
                                 }
                                 break;
-                            case "quality-measure":
-                                //We have another value for the quality measure.
-                                double minQuality = Double.valueOf(args[i + 1].toLowerCase());
-
-                                switch (value.toLowerCase()) {
-                                    case "wra": QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(minQuality);
-                                        break;
-                                    case "sen": QUALITY_MEASURE = new SensitivityQualityMeasure(minQuality);
-                                        break;
-                                    case "spec": QUALITY_MEASURE = new SpecificityQualityMeasure(minQuality);
-                                        break;
-                                    case "x2": QUALITY_MEASURE = new X2QualityMeasure(minQuality);
-                                        break;
-                                }
-
-                                i++;
-                                break;
                             default:
                                 System.out.println("Unknown parameter -" + value + ".");
                         }
                     }
                 }
             }
+            //</editor-fold>
         }
-
-        assert targetAttributes.length != 0;
 
         System.out.println("Taking values SEARCH_DEPTH = " + SEARCH_DEPTH + ", SEARCH_WIDTH = " + SEARCH_WIDTH + ", RESULT_SET_LENGTH = " + RESULT_SET_LENGTH + ", MINIMUM_GROUP_SIZE = " + MINIMUM_GROUP_SIZE + ", MAXIMUM_FRACTION = " + MAXIMUM_FRACTION + ", USE_THREADS = " + USE_THREADS + ".");
         try {
@@ -185,8 +134,8 @@ public class Core {
             blacklist.addAll(Arrays.asList(Core.blacklist));
 
             //Load the data from the given data file.
-            Dataset dataset = Dataset.loadARFF(filePath, countNullAsZero, targetAttributes, targetValues, targetComparisons, blacklist);
-            System.out.println("P=" + dataset.getP() + ", N=" + dataset.getN() + ", P+N=" + (dataset.getP() + dataset.getN()) + ", Number of instances: " + dataset.getInstances().size());
+            Dataset dataset = Dataset.loadARFF(filePath, yTarget, xTargets, countNullAsZero, blacklist);
+            System.out.println("Number of instances: " + dataset.getInstances().size());
 
             int uniqueValues = 0;
             for(AbstractAttribute attribute : dataset.getAttributes()) {
@@ -199,22 +148,17 @@ public class Core {
             System.out.println();
 
             System.out.println("=======================================================================================================================================");
-            System.out.println("Quality measure:\t\t\t[" + QUALITY_MEASURE.getName() + "] with minimum quality value " + QUALITY_MEASURE.getMinimumValue());
-            System.out.println("Quality measure formula:\t" + QUALITY_MEASURE.getFormula());
             System.out.println("Refinement Operator:\t\t[" + REFINEMENT_OPERATOR.getName() + "]");
-            System.out.println("Target group: \t\t\t\t[" + dataset.getTargetGroup().getReadableConstraints() + "]");
+            System.out.println("y target: \t\t\t\t\t[" + yTarget + "]");
+            System.out.println("x targets: \t\t\t\t\t[" + Arrays.toString(xTargets).replaceAll("[|]", "") + "]");
             System.out.println();
             Date start = new Date();
 
             //Do the beam search.
-            GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, USE_THREADS).search(dataset, QUALITY_MEASURE, REFINEMENT_OPERATOR, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH);
+            GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, USE_THREADS).search(dataset, REFINEMENT_OPERATOR, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH);
             Date end = new Date();
 
-            if(printCSVFormat) {
-                printQueueCSV(queue, start, end);
-            } else {
-                printQueue(queue, start, end);
-            }
+            printQueue(queue, start, end);
             System.out.println("=======================================================================================================================================");
 
         } catch (Exception e) {
@@ -235,29 +179,6 @@ public class Core {
         int i = 1;
         for(Group group : queue) {
             System.out.println(i + ". (id: " + group.getProduct() + ") " + group);
-            System.out.println(" \t" + group.getConfusionMatrix());
-            i++;
-        }
-        System.out.println();
-        System.out.println("Starting time: \t" + new SimpleDateFormat("[HH:mm:ss.SSS]").format(start));
-        System.out.println("Ending time: \t" + new SimpleDateFormat("[HH:mm:ss.SSS]").format(end));
-        System.out.println();
-    }
-
-    /**
-     * Print the priority queue as a CSV file format.
-     *
-     * @param queue The queue to print.
-     * @param start The time at which the beam search started.
-     * @param end The time at which the beam search ended.
-     */
-    private static void printQueueCSV(GroupPriorityQueue queue, Date start, Date end) {
-        System.out.println();
-        System.out.println("Resulting table: ");
-        System.out.println("Nr.;Depth;Coverage;Quality;Positives;Conditions;");
-        int i = 1;
-        for(Group group : queue) {
-            System.out.println(i + ";" + group.getConstraints().size() + ";" + group.getConfusionMatrix().getCoverage() + ";" + group.getEvaluation() + ";" + group.getConfusionMatrix().p + ";" + group.getReadableConstraints() + ";");
             i++;
         }
         System.out.println();
@@ -278,13 +199,10 @@ public class Core {
         blacklist = new String[]{};
         USE_THREADS = false;
         REFINEMENT_OPERATOR = new QualityRefinementOperator();
-        QUALITY_MEASURE = new WeightedRelativeAccuracyQualityMeasure(0.02);
-        printCSVFormat = false;
         countNullAsZero = false;
-        targetAttributes = new String[0];
-        filePath = "";
-        targetValues = new String[0];
-        targetComparisons = new Comparison[0];
+        filePath = "data/speed_dating_altered.arff";
+        yTarget = "like";
+        xTargets = new String[]{"attractive_partner","sincere_partner","intelligence_partner","funny_partner","ambition_partner","shared_interests_partner"};
     }
 
     /**
@@ -293,8 +211,6 @@ public class Core {
     private static void printHelp() {
         System.out.println("Parameters used to instantiate a beam search: ");
         System.out.println("\t-dataset-file value: The path to the dataset file. (MANDATORY)");
-        System.out.println();
-        System.out.println("\t-target attribute,comparison,value,attribute2,comparison2,value2,etc: The attribute with the cutoff values have to be inserted in trios. Here the comparison has to be one of the following: Must be one of the following: {EQ,NEQ,LTEQ,GTEQ}. (MANDATORY)");
         System.out.println();
         System.out.println("\t-T: Enable multi-threading. By enabling this, the program will use 8 threads during the beam search, which gives a considerable performance increase.");
         System.out.println();
@@ -320,13 +236,5 @@ public class Core {
         System.out.println("\t\t\tSRO: Simple refinement operator, which extends the seed with all possible constraints.");
         System.out.println("\t\t\tQRO: Quality refinement operator, which iterates over all possible constraints, \n" +
                 "\t\t\t\tand orders them in order of quality of the added constraint.");
-        System.out.println();
-        System.out.println("\t-quality-measure value value2: Set the quality measure used by the beam search.");
-        System.out.println("\t\tThe first value is the name of the quality measure, which must be one of the following:");
-        System.out.println("\t\t{WRA,SEN,SPEC,X2}");
-        System.out.println("\t\t\tWRA: Weighted Relative Accuracy, SEN: Sensitivity, SPEC: Specificity, X2: X2 statistic");
-        System.out.println("\t\tThe second value is the minimum quality that the beam search result should show.");
-        System.out.println("\tThe default configuration used is -quality-measure WRA 0.02");
-        System.out.println();
     }
 }

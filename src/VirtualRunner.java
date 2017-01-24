@@ -7,13 +7,19 @@ public class VirtualRunner {
      * @param args Not used.
      */
     public static void main(String[] args) {
-        String[] evaluators = new String[]{"WRA","SEN","SPEC","X2"};
-        String[] minQuality = new String[]{"0.02","0.9","0.9","300"};
 
-        String[] arguments;
-        for(int i = 0; i < evaluators.length; i++) {
-            arguments = new String[]{"-quality-measure", evaluators[i], minQuality[i], "-t", "-d", "1", "-w", "20", "-set-length", "20","-null-is-zero", "-target", "match,EQ,true", "-dataset-file", "data/speed_dating.arff", "-blacklist", "decision,decision_o"};
-            Core.main(arguments);
-        }
+        String[] arguments = new String[]{
+                "-t",
+                "-d", "3",
+                "-w", "20",
+                "-set-length", "20",
+                "-null-is-zero",
+                "-target", "match,EQ,true",
+                "-y-target", "like",
+                "-x-targets", "attractive_partner,sincere_partner,intelligence_partner,funny_partner,ambition_partner,shared_interests_partner",
+                "-dataset-file", "data/speed_dating_altered.arff",
+                "-blacklist", "decision,decision_o"};
+        Core.main(arguments);
+
     }
 }

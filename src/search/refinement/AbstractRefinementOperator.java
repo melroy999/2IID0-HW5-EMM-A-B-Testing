@@ -2,7 +2,6 @@ package search.refinement;
 
 import arff.Dataset;
 import group.Group;
-import search.quality.AbstractQualityMeasure;
 
 import java.math.BigInteger;
 import java.util.HashSet;
@@ -17,11 +16,11 @@ public abstract class AbstractRefinementOperator {
      *
      * @param seed The group to use as a seed.
      * @param dataset The dataset to take the data from.
-     * @param qualityMeasure The quality measure that is used.
      * @param encounteredGroups The prime products of the groups that have already been encountered.
+     * @param minimumQuality The minimum quality the group should have.
      * @return A set of groups that can be used in the beam search.
      */
-    public abstract Set<Group> generate(Group seed, Dataset dataset, AbstractQualityMeasure qualityMeasure, HashSet<BigInteger> encounteredGroups);
+    public abstract Set<Group> generate(Group seed, Dataset dataset, HashSet<BigInteger> encounteredGroups, double minimumQuality);
 
     /**
      * Get the name of the quality refinement mode.

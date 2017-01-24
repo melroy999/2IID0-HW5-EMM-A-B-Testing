@@ -5,6 +5,8 @@ import arff.attribute.Constraint;
 import arff.instance.Instance;
 import group.Comparison;
 import group.Group;
+import search.result.RegressionModelEvaluation;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import util.FileLoader;
 
 import java.util.*;
@@ -19,15 +21,14 @@ public class Dataset {
     //The relation name.
     private final String relationName;
 
-    //The amount of positive and negative cases within the total dataset.
-    private final int P;
-    private final int N;
+    //The y target for the regression model.
+    private final AbstractAttribute yTarget;
 
-    //Get the target group.
-    private final Group targetGroup;
+    //The x targets for the regression model.
+    private final AbstractAttribute[] xTargets;
 
-    //The target attribute.
-    private final AbstractAttribute[] targetAttributes;
+    //The lines of the file. Used as a buffer.
+    private static final List<String> lines = new ArrayList<>();
 
     /**
      * Create a dataset.
@@ -35,49 +36,24 @@ public class Dataset {
      * @param attributes The list of attributes.
      * @param instances The list of instances.
      * @param relationName The name of the relation.
-     * @param targetIds The ids of the target attributes.
-     * @param targetValues The target values.
-     * @param comparisons The comparisons used relative to the target values.
+     * @param yTarget The numeric y target.
+     * @param xTargets  The numeric x targets.
      */
-    public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int[] targetIds, String[] targetValues, Comparison[] comparisons) {
+    public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int yTarget, int[] xTargets) {
         this.instances = instances;
         this.attributes = attributes;
         this.relationName = relationName;
 
-        this.targetAttributes = new AbstractAttribute[targetIds.length];
-        for(int i = 0; i < targetIds.length; i++) {
-            this.targetAttributes[i] = attributes.get(targetIds[i]);
+        this.yTarget = attributes.get(yTarget);
+        this.xTargets = new AbstractAttribute[xTargets.length];
+        for(int i = 0; i < xTargets.length; i++) {
+            this.xTargets[i] = attributes.get(xTargets[i]);
         }
 
         //Initialize all the attributes.
         for(AbstractAttribute attribute : attributes) {
             attribute.initialize(this);
         }
-
-        //Set the target group.
-        Group targetGroup = new Group();
-        for(int i = 0; i < this.targetAttributes.length; i++) {
-            AbstractAttribute attribute = this.targetAttributes[i];
-            Comparison comparison = comparisons[i];
-            String targetValue = targetValues[i];
-            Constraint addition = attribute.getConstraint(attribute.getName() + " " + comparison + " " + attribute.convertValue(targetValue));
-
-            if(addition == null) {
-                throw new IllegalArgumentException("Target value " + targetValue + " or comparison mode " + comparison + " is invalid. The target attribute only supports the following comparisons: " + Arrays.toString(attribute.getComparisons()) + ".");
-            }
-
-            targetGroup = targetGroup.extendGroupWith(addition, new HashSet<>());
-        }
-
-        //Set the target group.
-        this.targetGroup = targetGroup;
-
-        //Count the amount of positive instances.
-        Set<Integer> indices = targetGroup.getIndicesSubset();
-
-        //Set the P and N values.
-        this.P = indices.size();
-        this.N = instances.size() - indices.size();
     }
 
     /**
@@ -99,24 +75,6 @@ public class Dataset {
     }
 
     /**
-     * Get the amount of positive instances in the Dataset file, for the target.
-     *
-     * @return The amount of positive instances.
-     */
-    public int getP() {
-        return P;
-    }
-
-    /**
-     * Get the amount of negative instances in the Dataset file, for the target.
-     *
-     * @return The amount of negative instances.
-     */
-    public int getN() {
-        return N;
-    }
-
-    /**
      * Get the relation name.
      *
      * @return The relation name, as denoted with @relation name.
@@ -126,30 +84,35 @@ public class Dataset {
     }
 
     /**
-     * Get the target attributes.
+     * Get the y target attribute.
      *
-     * @return The target attributes.
+     * @return The y target attribute object.
      */
-    public AbstractAttribute[] getTargetAttributes() {
-        return targetAttributes;
+    public AbstractAttribute getYTarget() {
+        return yTarget;
     }
 
-    //The lines of the file.
-    private static final List<String> lines = new ArrayList<>();
+    /**
+     * Get the x target attributes.
+     *
+     * @return The x target attributes object.
+     */
+    public AbstractAttribute[] getXTargets() {
+        return xTargets;
+    }
 
     /**
      * Read the given arff file, and convert it to an object.
      *
      * @param filePath The path to the file we want to load.
+     * @param yTarget The numeric y target.
+     * @param xTargets  The numeric x targets.
      * @param countNullAsZero Whether we count null values as zero in numerical cases.
-     * @param targetAttributes Name of the target attributes.
-     * @param targetValues The target values.
-     * @param targetComparisons The comparisons to use relative to the target values.
      * @param blacklist The blacklisted attributes.
      * @return The arff file as an object.
      * @throws Exception Throws an exception if the file cannot be loaded.
      */
-    public static Dataset loadARFF(String filePath, boolean countNullAsZero, String[] targetAttributes, String[] targetValues, Comparison[] targetComparisons, HashSet<String> blacklist) throws Exception {
+    public static Dataset loadARFF(String filePath, String yTarget, String[] xTargets, boolean countNullAsZero, HashSet<String> blacklist) throws Exception {
         lines.clear();
         lines.addAll(FileLoader.readAllLines(filePath));
 
@@ -179,35 +142,40 @@ public class Dataset {
             }
         }
 
-        int[] targetAttributeIds = new int[targetAttributes.length];
-        for(int i = 0; i < targetAttributes.length; i++) {
-            String targetAttribute = targetAttributes[i];
-            boolean targetAttributeFound = false;
-            for (AbstractAttribute attribute : attributes) {
-                //Find a match to the target attribute.
-                if (attribute.getName().equals(targetAttribute)) {
-                    targetAttributeFound = true;
-                    targetAttributeIds[i] = attribute.getId();
-                    break;
-                }
-            }
+        int yTargetId = findTargetAttributeId(yTarget, attributes);
 
-            if (!targetAttributeFound) {
-                throw new IllegalArgumentException(">>> WARNING: target attribute [" + targetAttribute + "] could not be found.");
-            }
+        int[] xTargetIds = new int[xTargets.length];
+        for(int i = 0; i < xTargets.length; i++) {
+            xTargetIds[i] = findTargetAttributeId(xTargets[i], attributes);
         }
 
-        System.out.println();
-
-        return new Dataset(attributes, instances, relation, targetAttributeIds, targetValues, targetComparisons);
+        return new Dataset(attributes, instances, relation, yTargetId, xTargetIds);
     }
 
     /**
-     * Get the target constraint.
+     * Find the id associated to the given target attribute.
      *
-     * @return The target constraint.
+     * @param targetAttribute The attribute name we want the id for.
+     * @param attributes The list of all attributes.
+     * @return The id of the attribute in question, throws an illegal argument exception otherwise.
      */
-    public Group getTargetGroup() {
-        return targetGroup;
+    private static int findTargetAttributeId(String targetAttribute, List<AbstractAttribute> attributes) {
+        for (AbstractAttribute attribute : attributes) {
+            //Find a match to the target attribute.
+            if (attribute.getName().equals(targetAttribute)) {
+                return attribute.getId();
+            }
+        }
+        throw new IllegalArgumentException(">>> WARNING: target attribute [" + targetAttribute + "] could not be found.");
+    }
+
+    /**
+     * Evaluate the subgroup that is denoted by the given indices.
+     * @param indices The indices that are part of the subgroup.
+     * @return An evaluation value according to cook's distance, together with the estimator vector.
+     */
+    public RegressionModelEvaluation getIndicesEvaluation(Set<Integer> indices) {
+        throw new NotImplementedException();
+        //return 0;
     }
 }
