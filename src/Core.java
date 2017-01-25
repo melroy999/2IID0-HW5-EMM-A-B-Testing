@@ -8,6 +8,9 @@ import search.refinement.SimpleRefinementOperator;
 import util.GroupPriorityQueue;
 import util.SieveOfAtkin;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -28,6 +31,7 @@ public class Core {
     private static AbstractRefinementOperator REFINEMENT_OPERATOR = new QualityRefinementOperator();
     private static boolean countNullAsZero = false;
     private static String filePath = "";
+    private static String outputFilePath = "";
 
     private static String yTarget;
     private static String[] xTargets;
@@ -111,6 +115,9 @@ public class Core {
                             case "dataset-file":
                                 filePath = value;
                                 break;
+                            case "output-file":
+                                outputFilePath = value;
+                                break;
                             case "refinement-operator":
                                 switch (value.toLowerCase()) {
                                     case "sro": REFINEMENT_OPERATOR = new SimpleRefinementOperator();
@@ -159,6 +166,10 @@ public class Core {
             Date end = new Date();
 
             printQueue(queue, start, end);
+            if(!outputFilePath.equals("")) {
+                printQueueToFile(queue, outputFilePath);
+            }
+
             System.out.println("=======================================================================================================================================");
 
         } catch (Exception e) {
@@ -187,6 +198,43 @@ public class Core {
         System.out.println();
     }
 
+    private static void printQueueToFile(GroupPriorityQueue queue, String outputFile) {
+        File outputFolder = new File("./results");
+
+        System.out.println();
+        System.out.println("Outputting to file ./results/" + outputFile + ".");
+
+        //Create the output directory if it does not already exist.
+        outputFolder.mkdir();
+
+        //Write to an output file.
+        try{
+            PrintWriter writer = new PrintWriter("./results/" + outputFile, "UTF-8");
+
+            String header = "id;subgroup;evaluation_value;";
+            for(int i = 0; i < xTargets.length + 1; i++) {
+                header += "beta_" + i + ";";
+            }
+            header += "size;";
+            writer.println(header);
+
+            for(Group group : queue) {
+                String line = "" + group.getProduct().toString() + ";" + group.getReadableConstraints() + ";" + group.getEvaluation();
+                for(double estimator : group.getEstimators()) {
+                    line += estimator + ";";
+                }
+                line += group.getCoverage() + ";";
+
+                writer.println(line);
+            }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Finished outputting.");
+    }
+
     /**
      * Restore all the default values for the parameters.
      */
@@ -203,6 +251,7 @@ public class Core {
         filePath = "data/speed_dating_altered.arff";
         yTarget = "like";
         xTargets = new String[]{"attractive_partner","sincere_partner","intelligence_partner","funny_partner","ambition_partner","shared_interests_partner"};
+        outputFilePath = "";
     }
 
     /**
@@ -211,6 +260,8 @@ public class Core {
     private static void printHelp() {
         System.out.println("Parameters used to instantiate a beam search: ");
         System.out.println("\t-dataset-file value: The path to the dataset file. (MANDATORY)");
+        System.out.println();
+        System.out.println("\t-output-file value: The name of the file to output the result to. ");
         System.out.println();
         System.out.println("\t-y-target value: The y target of the regression model. (MANDATORY)");
         System.out.println();

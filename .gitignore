@@ -6,6 +6,7 @@
 !/resources/
 !/data/
 !/matlab_analyzation_scripts/
+!/jar_folder_output_template/
 
 # Except for the following files:
 !.gitignore
