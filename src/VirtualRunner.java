@@ -11,12 +11,10 @@ public class VirtualRunner {
     public static void main(String[] args) {
 
         String[] arguments = new String[]{
-                //"-t",
                 "-d", "3",
                 "-w", "20",
                 "-set-length", "20",
                 "-null-is-zero",
-                "-target", "match,EQ,true",
                 "-y-target", "like",
                 "-x-targets", "attractive_partner,sincere_partner,intelligence_partner,funny_partner,ambition_partner,shared_interests_partner",
                 "-dataset-file", "data/speed_dating_altered.arff",

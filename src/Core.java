@@ -23,8 +23,8 @@ public class Core {
     private static int RESULT_SET_LENGTH = 100;
     private static int MINIMUM_GROUP_SIZE = 2;
     private static double MAXIMUM_FRACTION = 1.0;
+    private static double MINIMUM_QUALITY = 0;
     private static String[] blacklist = new String[]{};
-    private static boolean USE_THREADS = false;
     private static AbstractRefinementOperator REFINEMENT_OPERATOR = new QualityRefinementOperator();
     private static boolean countNullAsZero = false;
     private static String filePath = "";
@@ -52,7 +52,6 @@ public class Core {
         if(args.length == 0) {
             //<editor-fold desc="Default initialization">
             //Set the default values.
-            USE_THREADS = true;
             MAXIMUM_FRACTION = 0.9;
             MINIMUM_GROUP_SIZE = 1000;
             SEARCH_DEPTH = 2;
@@ -73,9 +72,7 @@ public class Core {
                     //Find the value we want to set.
                     String v = arg.replaceFirst("-", "");
 
-                    if(v.equalsIgnoreCase("T")) {
-                        USE_THREADS = true;
-                    } else if(v.equalsIgnoreCase("null-is-zero")) {
+                    if(v.equalsIgnoreCase("null-is-zero")) {
                         countNullAsZero = true;
                     } else {
                         //Get the next value.
@@ -101,6 +98,9 @@ public class Core {
                                 break;
                             case "min-group-size":
                                 MINIMUM_GROUP_SIZE = Integer.valueOf(value);
+                                break;
+                            case "min-quality":
+                                MINIMUM_QUALITY = Double.valueOf(value);
                                 break;
                             case "max-group-size-fraction":
                                 MAXIMUM_FRACTION = Double.valueOf(value);
@@ -128,7 +128,7 @@ public class Core {
             //</editor-fold>
         }
 
-        System.out.println("Taking values SEARCH_DEPTH = " + SEARCH_DEPTH + ", SEARCH_WIDTH = " + SEARCH_WIDTH + ", RESULT_SET_LENGTH = " + RESULT_SET_LENGTH + ", MINIMUM_GROUP_SIZE = " + MINIMUM_GROUP_SIZE + ", MAXIMUM_FRACTION = " + MAXIMUM_FRACTION + ", USE_THREADS = " + USE_THREADS + ".");
+        System.out.println("Taking values SEARCH_DEPTH = " + SEARCH_DEPTH + ", SEARCH_WIDTH = " + SEARCH_WIDTH + ", RESULT_SET_LENGTH = " + RESULT_SET_LENGTH + ", MINIMUM_GROUP_SIZE = " + MINIMUM_GROUP_SIZE + ", MAXIMUM_FRACTION = " + MAXIMUM_FRACTION + ", MINIMUM_QUALITY = " + MINIMUM_QUALITY + ".");
         try {
             HashSet<String> blacklist = new HashSet<>();
             blacklist.addAll(Arrays.asList(Core.blacklist));
@@ -149,13 +149,13 @@ public class Core {
 
             System.out.println("=======================================================================================================================================");
             System.out.println("Refinement Operator:\t\t[" + REFINEMENT_OPERATOR.getName() + "]");
-            System.out.println("y target: \t\t\t\t\t[" + yTarget + "]");
-            System.out.println("x targets: \t\t\t\t\t[" + Arrays.toString(xTargets).replaceAll("[|]", "") + "]");
+            System.out.println("y target: \t\t\t[" + yTarget + "]");
+            System.out.println("x targets: \t\t\t[" + Arrays.toString(xTargets).replaceAll("[|]", "") + "]");
             System.out.println();
             Date start = new Date();
 
             //Do the beam search.
-            GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, USE_THREADS).search(dataset, REFINEMENT_OPERATOR, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH);
+            GroupPriorityQueue queue = new BeamSearch(MINIMUM_GROUP_SIZE, MAXIMUM_FRACTION, MINIMUM_QUALITY).search(dataset, REFINEMENT_OPERATOR, SEARCH_WIDTH, SEARCH_DEPTH, RESULT_SET_LENGTH);
             Date end = new Date();
 
             printQueue(queue, start, end);
@@ -196,8 +196,8 @@ public class Core {
         RESULT_SET_LENGTH = 100;
         MINIMUM_GROUP_SIZE = 2;
         MAXIMUM_FRACTION = 1.0;
+        MINIMUM_QUALITY = 0;
         blacklist = new String[]{};
-        USE_THREADS = false;
         REFINEMENT_OPERATOR = new QualityRefinementOperator();
         countNullAsZero = false;
         filePath = "data/speed_dating_altered.arff";
@@ -212,9 +212,9 @@ public class Core {
         System.out.println("Parameters used to instantiate a beam search: ");
         System.out.println("\t-dataset-file value: The path to the dataset file. (MANDATORY)");
         System.out.println();
-        System.out.println("\t-T: Enable multi-threading. By enabling this, the program will use 8 threads during the beam search, which gives a considerable performance increase.");
+        System.out.println("\t-y-target value: The y target of the regression model. (MANDATORY)");
         System.out.println();
-        System.out.println("\t-csv: Print the result table with csv formatting. When copied, the text can be added to a csv file, through which the data can be opened in excel.");
+        System.out.println("\t-x-targets value1,value2,...: The x targets of the regression model. (MANDATORY)");
         System.out.println();
         System.out.println("\t-null-is-zero: Consider numeric null values to have a value of 0. On default, null values are left out of the evaluation.");
         System.out.println();
@@ -225,6 +225,8 @@ public class Core {
         System.out.println("\t-set-length value: The size of the returned priority queue. (default value: " + RESULT_SET_LENGTH + ")");
         System.out.println();
         System.out.println("\t-min-group-size value: The minimum coverage a subgroup should have. (default value: " + MINIMUM_GROUP_SIZE + ")");
+        System.out.println();
+        System.out.println("\t-min-quality value: The minimum quality a subgroup should have. (default value: " + MINIMUM_QUALITY + ")");
         System.out.println();
         System.out.println("\t-max-group-size-fraction value: The maximum coverage that a subgroup may have relative to the size of the dataset. This value should be a fraction. (default value: " + MAXIMUM_FRACTION + ")");
         System.out.println();
