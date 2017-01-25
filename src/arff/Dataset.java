@@ -77,19 +77,14 @@ public class Dataset {
         List<Integer> indices = new ArrayList<>(n);
         IntStream.range(0,n).forEach(indices::add);
 
-        //Verified with matlab.
         Matrix X = getXMatrix(indices);
         X_T = X.getTransposeMatrix();
         X_T_X = X_T.multiply(X);
         Y = getYVector(indices);
-
-
-
-
-
         beta_estimator = getBetaEstimator(new HashSet<>(indices));
         e = Y.subtract(X.multiply(beta_estimator));
-        int s_2 = 0;
+
+        double s_2 = 0;
         for(int i = 0; i < e.size(); i++) {
             s_2 += e.getValue(i) * e.getValue(i);
         }
@@ -97,8 +92,7 @@ public class Dataset {
 
         this.p_s_2 = p * s_2;
 
-        System.out.println("Real dataset has evaluation " + getCooksDistance(new HashSet<>(indices)));
-        System.exit(987);
+        System.out.println("Full dataset has evaluation " + getCooksDistance(new HashSet<>(indices)));
     }
 
     /**
@@ -222,7 +216,7 @@ public class Dataset {
         return getCooksDistance(indices);
     }
 
-    //Loads of buffers, for memory management.
+    //Loads of buffers, for memory management. This makes sure that memory won't be a large issue.
     private static List<Integer> indices_list;
     private static double[][] get_x_matrix_data_buffer;
     private static Matrix get_beta_estimator_X;
@@ -237,6 +231,12 @@ public class Dataset {
     private static Vector subgroup_beta_estimator;
     private static Vector beta_difference_vector;
 
+    /**
+     * Calculate the cook's distance as specified in the assignment paper.
+     *
+     * @param indices The indices that are RETAINED, not removed!
+     * @return An object containing all evaluation information.
+     */
     public synchronized RegressionModelEvaluation getCooksDistance(Set<Integer> indices) {
         //Get the beta estimator for the subgroup.
         subgroup_beta_estimator = getBetaEstimator(indices);
@@ -248,9 +248,15 @@ public class Dataset {
         double evaluation = beta_difference_vector.dot(X_T_X.multiply(beta_difference_vector)) / p_s_2;
 
         //Return the evaluation + the beta estimator of the subgroup.
-        return new RegressionModelEvaluation(evaluation, subgroup_beta_estimator.getValues());
+        return new RegressionModelEvaluation(evaluation, subgroup_beta_estimator.getValues(), indices.size());
     }
 
+    /**
+     * Get the beta estimator used by the cook's distance.
+     *
+     * @param indices The indices that are RETAINED, not removed!
+     * @return The beta estimation vector.
+     */
     public Vector getBetaEstimator(Set<Integer> indices) {
         //Convert the indices set to a list.
         indices_list = new ArrayList<>(indices);
@@ -271,6 +277,12 @@ public class Dataset {
         return get_beta_estimator_X_T_X_inverse.multiply(get_beta_estimator_X_T_Y);
     }
 
+    /**
+     * Get the X matrix corresponding to the indices and the xtargets.
+     *
+     * @param indices The indices that are RETAINED, not removed!
+     * @return Matrix in which the first column is 1, attribute values in the others.
+     */
     public Matrix getXMatrix(List<Integer> indices) {
         //NOTE: we want the transpose of the actual matrix, so we switch i and j.
         get_x_matrix_data_buffer = new double[indices.size()][p];
@@ -297,10 +309,20 @@ public class Dataset {
             }
         }
 
+        if(indices.isEmpty()) {
+            System.out.println("EMPTY! WE GOT A PROBLEM!");
+        }
+
         //Create a matrix from this data.
         return new Matrix(get_x_matrix_data_buffer);
     }
 
+    /**
+     * Get the values of the y-target represented as a vector.
+     *
+     * @param indices The indices that are RETAINED, not removed!
+     * @return Vector containing the values of the y-target for the indices that are retained.
+     */
     public Vector getYVector(List<Integer> indices) {
         get_y_vector_data_buffer = new double[indices.size()];
 

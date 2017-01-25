@@ -119,16 +119,17 @@ public class BeamSearch {
      * @param groups The set of groups to iterate over.
      */
     private void iterateOverGroups(Dataset dataset, GroupPriorityQueue resultSet, GroupPriorityQueue beam, Set<Integer> seedIndices, Set<Group> groups) {
+        double maximumCoverage = maximumCoverageFraction * dataset.getInstances().size();
+
         //Iterate over all these groups.
         for(Group group : groups) {
             //System.out.println(Util.getCurrentTimeStamp() + " Evaluating seed " + group);
 
             //Get the quality.
-            double quality = group.evaluateQuality(dataset, seedIndices);
+            double quality = group.evaluateQuality(dataset, seedIndices, minimumCoverage, maximumCoverage);
 
-            //TODO implement constraints.
             //If the group satisfies all constraints.
-            if(quality > minimumQuality && group.getCoverage() > minimumCoverage && group.getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
+            if(quality > minimumQuality) {
                 //Add it to the result set.
                 resultSet.add(group);
 
@@ -151,6 +152,8 @@ public class BeamSearch {
         //Create a collection of callables that have to be ran.
         Collection<Callable<Group>> callables = new ArrayList<>();
 
+        double maximumCoverage = maximumCoverageFraction * dataset.getInstances().size();
+
         //Iterate over all these groups.
         for(Group group : groups) {
             callables.add(new Callable<Group>() {
@@ -163,11 +166,11 @@ public class BeamSearch {
                 @Override
                 public Group call() throws Exception {
                     //Get the quality.
-                    double quality = group.evaluateQuality(dataset, seedIndices);
+                    //Get the quality.
+                    double quality = group.evaluateQuality(dataset, seedIndices, minimumCoverage, maximumCoverage);
 
-                    //TODO implement constraints.
                     //If the group satisfies all constraints.
-                    if(quality > minimumQuality && group.getCoverage() > minimumCoverage && group.getCoverage() < maximumCoverageFraction * dataset.getInstances().size()) {
+                    if(quality > minimumQuality) {
                         //Add it to the result set.
                         resultSet.add(group);
 

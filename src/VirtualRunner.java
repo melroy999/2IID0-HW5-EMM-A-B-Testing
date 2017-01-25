@@ -20,7 +20,8 @@ public class VirtualRunner {
                 "-y-target", "like",
                 "-x-targets", "attractive_partner,sincere_partner,intelligence_partner,funny_partner,ambition_partner,shared_interests_partner",
                 "-dataset-file", "data/speed_dating_altered.arff",
-                "-blacklist", "decision,decision_o"
+                "-blacklist", "decision,decision_o",
+                "-min-group-size", "200"
         };
 
         Core.main(arguments);

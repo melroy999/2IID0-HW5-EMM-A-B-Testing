@@ -49,17 +49,20 @@ writetable(T, 'speed_dating_altered.csv','Delimiter',',');
 
 X = [ones(length(V_minus_m),1) V_minus_m(:,1:end-1)];
 Y = V_minus_m(:,end);
-beta_estimator = get_beta_vector(V);
+beta_estimator = get_beta_vector(V_minus_m);
 e = Y - X * beta_estimator;
 p_s_2 = m * ((e.' * e) / (n - m));
 
 
-X_T = X.';
-X_T_X = X_T * X;
-X_T_X_inv = inv(X_T_X);
+%X_T = X.';
+%X_T_X = X_T * X;
+%X_T_X_inv = inv(X_T_X);
 
-beta_1 = X_T_X_inv * X_T * Y;
-beta_2 = X_T_X_inv * (X_T * Y);
+%beta_1 = X_T_X_inv * X_T * Y;
+%beta_2 = X_T_X_inv * (X_T * Y);
+
+%e_2 = Y - X * beta_2;
+%p_s_2_2 = m * ((e_2.' * e_2) / (n - m));
 
 
 
