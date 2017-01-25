@@ -147,4 +147,11 @@ public class Vector {
     public double getValue(int i) {
         return values[i];
     }
+
+    @Override
+    public String toString() {
+        return "Vector{" +
+                "values=" + Arrays.toString(values) +
+                '}';
+    }
 }

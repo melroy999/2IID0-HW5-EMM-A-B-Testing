@@ -172,9 +172,7 @@ public abstract class AbstractAttribute<T> {
         //Create the constraints.
         for(Constraint<T> constraint : constraints) {
             //Add the score of the confusion matrix.
-            //TODO implement the quality measure.
             constraintToEvaluation.put(constraint.getProduct(), getConstraintEvaluation(constraint, dataset));
-            throw new NotImplementedException();
         }
     }
 

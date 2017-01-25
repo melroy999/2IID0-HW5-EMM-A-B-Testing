@@ -9,10 +9,7 @@ import util.linearalgebra.Matrix;
 import util.linearalgebra.NoSquareException;
 import util.linearalgebra.Vector;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.IntStream;
 
 public class Dataset {
@@ -80,10 +77,16 @@ public class Dataset {
         List<Integer> indices = new ArrayList<>(n);
         IntStream.range(0,n).forEach(indices::add);
 
+        //Verified with matlab.
         Matrix X = getXMatrix(indices);
         X_T = X.getTransposeMatrix();
         X_T_X = X_T.multiply(X);
         Y = getYVector(indices);
+
+
+
+
+
         beta_estimator = getBetaEstimator(new HashSet<>(indices));
         e = Y.subtract(X.multiply(beta_estimator));
         int s_2 = 0;
@@ -91,7 +94,11 @@ public class Dataset {
             s_2 += e.getValue(i) * e.getValue(i);
         }
         s_2 = s_2 / (n - p);
+
         this.p_s_2 = p * s_2;
+
+        System.out.println("Real dataset has evaluation " + getCooksDistance(new HashSet<>(indices)));
+        System.exit(987);
     }
 
     /**
@@ -265,7 +272,8 @@ public class Dataset {
     }
 
     public Matrix getXMatrix(List<Integer> indices) {
-        get_x_matrix_data_buffer = new double[p][indices.size()];
+        //NOTE: we want the transpose of the actual matrix, so we switch i and j.
+        get_x_matrix_data_buffer = new double[indices.size()][p];
 
         //Fill the data array with the appropriate values.
         for(int i = 0; i < p; i++) {
@@ -275,14 +283,16 @@ public class Dataset {
             }
             for(int j = 0; j < indices.size(); j++) {
                 //Fill it with 1s if i == 0.
+                //NOTE: we want the transpose of the actual matrix, so we switch i and j.
                 if(i == 0) {
-                    get_x_matrix_data_buffer[i][j] = 1;
+                    get_x_matrix_data_buffer[j][i] = 1;
                 } else {
                     //The current instance we would look at.
                     Instance instance = instances.get(indices.get(j));
 
                     //Take the data from the appropriate attribute.
-                    get_x_matrix_data_buffer[i][j] = attribute.getValue(instance);
+                    //NOTE: we want the transpose of the actual matrix, so we switch i and j.
+                    get_x_matrix_data_buffer[j][i] = attribute.getValue(instance);
                 }
             }
         }

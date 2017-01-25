@@ -314,7 +314,9 @@ public class Matrix {
      * @param v1 The vector in the comparison.
      */
     public static void checkDimensions(Matrix m1, Vector v1) {
-        if(m1.n != v1.size()) {
+        if(m1.m != v1.size()) {
+            System.out.println("Matrix size: " + m1.n + " x " + m1.m);
+            System.out.println("Vector size: " + v1.size());
             throw new IllegalArgumentException("The matrix and the vector do not share the same n!");
         }
     }
