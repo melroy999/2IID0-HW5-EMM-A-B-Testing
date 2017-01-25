@@ -1,15 +1,19 @@
 package arff;
 
 import arff.attribute.AbstractAttribute;
-import arff.attribute.Constraint;
+import arff.attribute.NumericAttribute;
 import arff.instance.Instance;
-import group.Comparison;
-import group.Group;
 import search.result.RegressionModelEvaluation;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import util.FileLoader;
+import util.linearalgebra.Matrix;
+import util.linearalgebra.NoSquareException;
+import util.linearalgebra.Vector;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.IntStream;
 
 public class Dataset {
     //The list of attributes within the dataset file.
@@ -30,6 +34,17 @@ public class Dataset {
     //The lines of the file. Used as a buffer.
     private static final List<String> lines = new ArrayList<>();
 
+    //The degrees of freedom.
+    private final int p;
+
+    //Matrices and other stuff that we need for cook's distance, and should be constant.
+    private final Matrix X_T;
+    private final Matrix X_T_X;
+    private final Vector Y;
+    private final Vector beta_estimator;
+    private final Vector e;
+    private final double p_s_2;
+
     /**
      * Create a dataset.
      *
@@ -45,15 +60,38 @@ public class Dataset {
         this.relationName = relationName;
 
         this.yTarget = attributes.get(yTarget);
+        if (!(this.yTarget instanceof NumericAttribute)) throw new IllegalArgumentException("The target attribute " + this.yTarget.getName() + " is not numeric!");
         this.xTargets = new AbstractAttribute[xTargets.length];
         for(int i = 0; i < xTargets.length; i++) {
             this.xTargets[i] = attributes.get(xTargets[i]);
+            if (!(this.xTargets[i] instanceof NumericAttribute)) throw new IllegalArgumentException("The target attribute " + this.xTargets[i].getName() + " is not numeric!");
         }
+
+        //The degrees of freedom is the x targets amount + 1.
+        p = xTargets.length + 1;
 
         //Initialize all the attributes.
         for(AbstractAttribute attribute : attributes) {
             attribute.initialize(this);
         }
+
+        //Set the data needed for the evaluation process.
+        int n = instances.size();
+        List<Integer> indices = new ArrayList<>(n);
+        IntStream.range(0,n).forEach(indices::add);
+
+        Matrix X = getXMatrix(indices);
+        X_T = X.getTransposeMatrix();
+        X_T_X = X_T.multiply(X);
+        Y = getYVector(indices);
+        beta_estimator = getBetaEstimator(new HashSet<>(indices));
+        e = Y.subtract(X.multiply(beta_estimator));
+        int s_2 = 0;
+        for(int i = 0; i < e.size(); i++) {
+            s_2 += e.getValue(i) * e.getValue(i);
+        }
+        s_2 = s_2 / (n - p);
+        this.p_s_2 = p * s_2;
     }
 
     /**
@@ -143,7 +181,6 @@ public class Dataset {
         }
 
         int yTargetId = findTargetAttributeId(yTarget, attributes);
-
         int[] xTargetIds = new int[xTargets.length];
         for(int i = 0; i < xTargets.length; i++) {
             xTargetIds[i] = findTargetAttributeId(xTargets[i], attributes);
@@ -175,7 +212,94 @@ public class Dataset {
      * @return An evaluation value according to cook's distance, together with the estimator vector.
      */
     public RegressionModelEvaluation getIndicesEvaluation(Set<Integer> indices) {
-        throw new NotImplementedException();
-        //return 0;
+        return getCooksDistance(indices);
+    }
+
+    //Loads of buffers, for memory management.
+    private static List<Integer> indices_list;
+    private static double[][] get_x_matrix_data_buffer;
+    private static Matrix get_beta_estimator_X;
+    private static Matrix get_beta_estimator_X_T;
+    private static Matrix get_beta_estimator_X_T_X;
+    private static Matrix get_beta_estimator_X_T_X_inverse;
+
+    private static double[] get_y_vector_data_buffer;
+    private static Vector get_beta_estimator_Y;
+    private static Vector get_beta_estimator_X_T_Y;
+
+    private static Vector subgroup_beta_estimator;
+    private static Vector beta_difference_vector;
+
+    public synchronized RegressionModelEvaluation getCooksDistance(Set<Integer> indices) {
+        //Get the beta estimator for the subgroup.
+        subgroup_beta_estimator = getBetaEstimator(indices);
+
+        //Get the difference of the two beta vectors.
+        beta_difference_vector = subgroup_beta_estimator.subtract(beta_estimator);
+
+        //The top part of the cook's distance equation, divided by the bottom part which is already known as p_2_s.
+        double evaluation = beta_difference_vector.dot(X_T_X.multiply(beta_difference_vector)) / p_s_2;
+
+        //Return the evaluation + the beta estimator of the subgroup.
+        return new RegressionModelEvaluation(evaluation, subgroup_beta_estimator.getValues());
+    }
+
+    public Vector getBetaEstimator(Set<Integer> indices) {
+        //Convert the indices set to a list.
+        indices_list = new ArrayList<>(indices);
+
+        get_beta_estimator_X = getXMatrix(indices_list);
+        get_beta_estimator_X_T = get_beta_estimator_X.getTransposeMatrix();
+
+        get_beta_estimator_X_T_X = get_beta_estimator_X_T.multiply(get_beta_estimator_X);
+        try {
+            get_beta_estimator_X_T_X_inverse = get_beta_estimator_X_T_X.getInverse();
+        } catch (NoSquareException e) {
+            throw new IllegalArgumentException("Inverse matrix has not been given a square matrix!");
+        }
+
+        get_beta_estimator_Y = getYVector(indices_list);
+        get_beta_estimator_X_T_Y = get_beta_estimator_X_T.multiply(get_beta_estimator_Y);
+
+        return get_beta_estimator_X_T_X_inverse.multiply(get_beta_estimator_X_T_Y);
+    }
+
+    public Matrix getXMatrix(List<Integer> indices) {
+        get_x_matrix_data_buffer = new double[p][indices.size()];
+
+        //Fill the data array with the appropriate values.
+        for(int i = 0; i < p; i++) {
+            NumericAttribute attribute = null;
+            if(i > 0) {
+                attribute = (NumericAttribute) xTargets[i-1];
+            }
+            for(int j = 0; j < indices.size(); j++) {
+                //Fill it with 1s if i == 0.
+                if(i == 0) {
+                    get_x_matrix_data_buffer[i][j] = 1;
+                } else {
+                    //The current instance we would look at.
+                    Instance instance = instances.get(indices.get(j));
+
+                    //Take the data from the appropriate attribute.
+                    get_x_matrix_data_buffer[i][j] = attribute.getValue(instance);
+                }
+            }
+        }
+
+        //Create a matrix from this data.
+        return new Matrix(get_x_matrix_data_buffer);
+    }
+
+    public Vector getYVector(List<Integer> indices) {
+        get_y_vector_data_buffer = new double[indices.size()];
+
+        NumericAttribute attribute = (NumericAttribute) yTarget;
+        for(int j = 0; j < indices.size(); j++) {
+            Instance instance = instances.get(indices.get(j));
+            get_y_vector_data_buffer[j] = attribute.getValue(instance);
+        }
+
+        return new Vector(get_y_vector_data_buffer);
     }
 }

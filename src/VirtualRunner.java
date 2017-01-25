@@ -1,3 +1,5 @@
+import java.io.IOException;
+
 /**
  * A helper class used for batch running beam searches.
  */
@@ -19,6 +21,13 @@ public class VirtualRunner {
                 "-x-targets", "attractive_partner,sincere_partner,intelligence_partner,funny_partner,ambition_partner,shared_interests_partner",
                 "-dataset-file", "data/speed_dating_altered.arff",
                 "-blacklist", "decision,decision_o"};
+
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         Core.main(arguments);
 
     }
