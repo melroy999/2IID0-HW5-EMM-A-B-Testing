@@ -252,7 +252,7 @@ public class Core {
             writer.println(header);
 
             for(Group group : queue) {
-                String line = "" + group.getProduct().toString() + ";" + group.getReadableConstraints() + ";" + group.getEvaluation();
+                String line = "" + group.getProduct().toString() + ";" + group.getReadableConstraints() + ";" + group.getEvaluation() + ";";
                 for(double estimator : group.getEstimators()) {
                     line += estimator + ";";
                 }
