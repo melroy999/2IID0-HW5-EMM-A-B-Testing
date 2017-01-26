@@ -1,11 +1,26 @@
-%Read the table in csv form. 
-T = readtable('speed_dating.csv');
+% ====== Variables that can be altered.
+
+%The name of the input CSV file, which is the file saved through Weka.
+input_file_name = 'speed_dating.csv'; 
+
+%The name of the output CSV file, which is the file in which all missing values have been processed.
+output_file_name = 'speed_dating_altered.csv'; 
 
 %Id of the x target columns.
-x_targets = [62, 63, 64, 65, 66, 67];
+%The indices of the attributes that should be considered the x-targets of the regression model, where the attribute with index 1 is the first attribute in the dataset.
+x_targets = [62, 63, 64, 65, 66, 67]; 
 
 %Id of the y target column.
-y_target = 116;
+%The index of the attribute that should be considered the y-target of the regression model, where the attribute with index 1 is the first attribute in the dataset.
+y_target = 116; 
+
+% ====== End of variables that can be altered.
+
+
+
+
+%Read the table in csv form. 
+T = readtable(input_file_name);
 
 %The complete list of targets.
 targets = [x_targets, y_target];
@@ -45,24 +60,7 @@ for i=1:n
 end
 
 %Create a new csv file.
-writetable(T, 'speed_dating_altered.csv','Delimiter',',');
-
-X = [ones(length(V_minus_m),1) V_minus_m(:,1:end-1)];
-Y = V_minus_m(:,end);
-beta_estimator = get_beta_vector(V_minus_m);
-e = Y - X * beta_estimator;
-p_s_2 = m * ((e.' * e) / (n - m));
-
-
-%X_T = X.';
-%X_T_X = X_T * X;
-%X_T_X_inv = inv(X_T_X);
-
-%beta_1 = X_T_X_inv * X_T * Y;
-%beta_2 = X_T_X_inv * (X_T * Y);
-
-%e_2 = Y - X * beta_2;
-%p_s_2_2 = m * ((e_2.' * e_2) / (n - m));
+writetable(T, output_file_name,'Delimiter',',');
 
 
 

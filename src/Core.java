@@ -62,7 +62,6 @@ public class Core {
             SEARCH_WIDTH = 25;
             REFINEMENT_OPERATOR = new QualityRefinementOperator();
             blacklist = new String[]{"decision","decision_o"};
-            countNullAsZero = false;
             filePath = "data/speed_dating_altered.arff";
             yTarget = "like";
             xTargets = new String[]{"attractive_partner","sincere_partner","intelligence_partner","funny_partner","ambition_partner","shared_interests_partner"};
@@ -82,7 +81,8 @@ public class Core {
                     String v = arg.replaceFirst("-", "");
 
                     if(v.equalsIgnoreCase("null-is-zero")) {
-                        countNullAsZero = true;
+                        //Disabled.
+                        //countNullAsZero = true;
                     } else {
                         //Get the next value.
                         //Increment i as well.
@@ -304,8 +304,6 @@ public class Core {
         System.out.println("\t-x-targets value1,value2,...: The x targets of the regression model. (MANDATORY)");
         System.out.println();
         System.out.println("\t-seed-group attribute,comparison,value,attribute2,comparison2,value2,etc: The attribute with the cutoff values have to be inserted in trios. Here the comparison has to be one of the following: {EQ,NEQ,LTEQ,GTEQ}.");
-        System.out.println();
-        System.out.println("\t-null-is-zero: Consider numeric null values to have a value of 0. On default, null values are left out of the evaluation.");
         System.out.println();
         System.out.println("\t-d value: Set the beam search depth to the desired integer value. (default value: " + SEARCH_DEPTH + ")");
         System.out.println();

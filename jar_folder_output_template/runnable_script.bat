@@ -6,7 +6,6 @@ java -jar 2IID0-HW5-EMM-A-B-Testing.jar ^
 -d 1 ^
 -w 20 ^
 -set-length 20 ^
--null-is-zero ^
 -blacklist decision,decision_o ^
 -min-group-size 200 ^
 -output-file result_1.csv
