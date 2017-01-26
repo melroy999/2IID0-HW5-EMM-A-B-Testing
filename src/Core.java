@@ -47,11 +47,6 @@ public class Core {
      * @param args The list of arguments.
      */
     public static void main(String[] args) {
-        if(args[0].equals("--help")) {
-            printHelp();
-            return;
-        }
-
         //Reset the sieve prime counter.
         SieveOfAtkin.resetCounter();
 
@@ -73,6 +68,11 @@ public class Core {
             xTargets = new String[]{"attractive_partner","sincere_partner","intelligence_partner","funny_partner","ambition_partner","shared_interests_partner"};
             //</editor-fold>
         } else {
+            if(args[0].equals("--help")) {
+                printHelp();
+                return;
+            }
+
             //<editor-fold desc="Parameterized initialization">
             System.out.println("Arguments: " + Arrays.toString(args));
             for(int i = 0; i < args.length; i++) {
