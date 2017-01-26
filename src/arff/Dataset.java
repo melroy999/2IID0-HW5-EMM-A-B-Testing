@@ -1,8 +1,11 @@
 package arff;
 
 import arff.attribute.AbstractAttribute;
+import arff.attribute.Constraint;
 import arff.attribute.NumericAttribute;
 import arff.instance.Instance;
+import group.Comparison;
+import group.Group;
 import search.result.RegressionModelEvaluation;
 import util.FileLoader;
 import util.linearalgebra.Matrix;
@@ -28,6 +31,9 @@ public class Dataset {
     //The x targets for the regression model.
     private final AbstractAttribute[] xTargets;
 
+    //The initial seed.
+    private final Group seed;
+
     //The lines of the file. Used as a buffer.
     private static final List<String> lines = new ArrayList<>();
 
@@ -50,12 +56,16 @@ public class Dataset {
      * @param relationName The name of the relation.
      * @param yTarget The numeric y target.
      * @param xTargets  The numeric x targets.
+     * @param seedAttributes  The attributes that are present within the seed.
+     * @param seedComparisons  The attribute comparisons that are present within the seed.
+     * @param seedTargets  The attribute values that are present within the seed.
      */
-    public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int yTarget, int[] xTargets) {
+    public Dataset(List<AbstractAttribute> attributes, List<Instance> instances, String relationName, int yTarget, int[] xTargets, int[] seedAttributes, Comparison[] seedComparisons, String[] seedTargets) {
         this.instances = instances;
         this.attributes = attributes;
         this.relationName = relationName;
 
+        //Find the y and x targets as attributes.
         this.yTarget = attributes.get(yTarget);
         if (!(this.yTarget instanceof NumericAttribute)) throw new IllegalArgumentException("The target attribute " + this.yTarget.getName() + " is not numeric!");
         this.xTargets = new AbstractAttribute[xTargets.length];
@@ -64,13 +74,29 @@ public class Dataset {
             if (!(this.xTargets[i] instanceof NumericAttribute)) throw new IllegalArgumentException("The target attribute " + this.xTargets[i].getName() + " is not numeric!");
         }
 
-        //The degrees of freedom is the x targets amount + 1.
-        p = xTargets.length + 1;
-
         //Initialize all the attributes.
         for(AbstractAttribute attribute : attributes) {
             attribute.initialize(this);
         }
+
+        //The degrees of freedom is the x targets amount + 1.
+        p = xTargets.length + 1;
+
+        //Create the seed group.
+        Group seed = new Group();
+        for(int i = 0; i < seedAttributes.length; i++) {
+            AbstractAttribute attribute = attributes.get(seedAttributes[i]);
+            Comparison comparison = seedComparisons[i];
+            String targetValue = seedTargets[i];
+            Constraint addition = attribute.getConstraint(attribute.getName() + " " + comparison + " " + attribute.convertValue(targetValue));
+
+            if(addition == null) {
+                throw new IllegalArgumentException("Target value " + targetValue + " or comparison mode " + comparison + " is invalid. The target attribute only supports the following comparisons: " + Arrays.toString(attribute.getComparisons()) + ".");
+            }
+
+            seed = seed.extendGroupWith(addition, new HashSet<>());
+        }
+        this.seed = seed;
 
         //Set the data needed for the evaluation process.
         int n = instances.size();
@@ -93,6 +119,14 @@ public class Dataset {
         this.p_s_2 = p * s_2;
 
         System.out.println("Full dataset has evaluation " + getCooksDistance(new HashSet<>(indices)));
+
+        //Make sure that when the group is empty, we still have a list of indices.
+        Set<Integer> seedIndices = seed.getIndicesSubset();
+        if(seed.getConstraints().isEmpty()) {
+            seedIndices = new HashSet<>(indices);
+        }
+
+        System.out.println("Seed group [" + this.seed.getReadableConstraints() + "] has evaluation " + getCooksDistance(seedIndices));
     }
 
     /**
@@ -141,17 +175,29 @@ public class Dataset {
     }
 
     /**
+     * Get the seed group.
+     *
+     * @return The seed group.
+     */
+    public Group getSeed() {
+        return seed;
+    }
+
+    /**
      * Read the given arff file, and convert it to an object.
      *
      * @param filePath The path to the file we want to load.
      * @param yTarget The numeric y target.
      * @param xTargets  The numeric x targets.
+     * @param seedAttributes  The attributes that are present within the seed.
+     * @param seedComparisons  The attribute comparisons that are present within the seed.
+     * @param seedTargets  The attribute values that are present within the seed.
      * @param countNullAsZero Whether we count null values as zero in numerical cases.
      * @param blacklist The blacklisted attributes.
      * @return The arff file as an object.
      * @throws Exception Throws an exception if the file cannot be loaded.
      */
-    public static Dataset loadARFF(String filePath, String yTarget, String[] xTargets, boolean countNullAsZero, HashSet<String> blacklist) throws Exception {
+    public static Dataset loadARFF(String filePath, String yTarget, String[] xTargets, String[] seedAttributes, Comparison[] seedComparisons, String[] seedTargets, boolean countNullAsZero, HashSet<String> blacklist) throws Exception {
         lines.clear();
         lines.addAll(FileLoader.readAllLines(filePath));
 
@@ -186,8 +232,12 @@ public class Dataset {
         for(int i = 0; i < xTargets.length; i++) {
             xTargetIds[i] = findTargetAttributeId(xTargets[i], attributes);
         }
+        int[] seedIds = new int[seedAttributes.length];
+        for(int i = 0; i < seedAttributes.length; i++) {
+            seedIds[i] = findTargetAttributeId(seedAttributes[i], attributes);
+        }
 
-        return new Dataset(attributes, instances, relation, yTargetId, xTargetIds);
+        return new Dataset(attributes, instances, relation, yTargetId, xTargetIds, seedIds, seedComparisons, seedTargets);
     }
 
     /**

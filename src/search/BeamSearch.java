@@ -50,7 +50,7 @@ public class BeamSearch {
 
         //Create a candidate queue, and add the empty seed as the first element.
         PriorityQueue<Group> candidateQueue = new PriorityQueue<>();
-        candidateQueue.add(new Group());
+        candidateQueue.add(dataset.getSeed());
 
         //The group priority queue is a tree set of fixed size.
         GroupPriorityQueue resultSet = new GroupPriorityQueue(resultSetSize);
@@ -74,7 +74,6 @@ public class BeamSearch {
                 Set<Integer> seedIndices = seed.getIndicesSubset();
 
                 System.out.println("\tEvaluating seed " + seed);
-                //System.out.println("\t\tConfusionTable: " + seed.getConfusionMatrix());
 
                 //Get the candidate subgroups from the seed.
                 Set<Group> groups = refinementOperator.generate(seed, dataset, encounteredGroups, minimumQuality);

@@ -3,11 +3,8 @@ package arff.attribute;
 import arff.Dataset;
 import arff.instance.Instance;
 import group.Comparison;
-import group.Group;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import util.SieveOfAtkin;
 
-import javax.xml.crypto.Data;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;

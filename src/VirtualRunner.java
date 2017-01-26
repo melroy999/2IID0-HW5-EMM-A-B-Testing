@@ -1,5 +1,3 @@
-import java.io.IOException;
-
 /**
  * A helper class used for batch running beam searches.
  */
@@ -20,7 +18,8 @@ public class VirtualRunner {
                 "-dataset-file", "data/speed_dating_altered.arff",
                 "-blacklist", "decision,decision_o",
                 "-min-group-size", "200",
-                "-output-file", "result_1.csv"
+                "-output-file", "result_1.csv",
+                "-seed-group", "d_like,EQ,[9-10],d_attractive_partner,NEQ,[9-10]"
         };
 
         Core.main(arguments);

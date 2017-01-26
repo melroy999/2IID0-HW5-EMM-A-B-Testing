@@ -7,6 +7,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class Group implements Comparable<Group> {
     //The constraints used within the group.

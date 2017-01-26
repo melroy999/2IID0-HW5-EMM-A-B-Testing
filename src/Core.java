@@ -1,5 +1,6 @@
 import arff.Dataset;
 import arff.attribute.AbstractAttribute;
+import group.Comparison;
 import group.Group;
 import search.BeamSearch;
 import search.refinement.AbstractRefinementOperator;
@@ -32,6 +33,10 @@ public class Core {
     private static boolean countNullAsZero = false;
     private static String filePath = "";
     private static String outputFilePath = "";
+
+    private static String[] seedAttributes = new String[]{};
+    private static Comparison[] seedComparisons = new Comparison[]{};
+    private static String[] seedValues = new String[]{};
 
     private static String yTarget;
     private static String[] xTargets;
@@ -118,6 +123,34 @@ public class Core {
                             case "output-file":
                                 outputFilePath = value;
                                 break;
+                            case "seed-group":
+                                String[] split = value.split(",");
+                                seedAttributes = new String[split.length / 3];
+                                seedComparisons = new Comparison[split.length / 3];
+                                seedValues = new String[split.length / 3];
+
+                                for(int k = 0; k < split.length / 3; k++) {
+                                    seedAttributes[k] = split[k * 3];
+                                    switch (split[k * 3 + 1].toLowerCase()) {
+                                        case "eq":
+                                            seedComparisons[k] = Comparison.EQ;
+                                            break;
+                                        case "neq":
+                                            seedComparisons[k] = Comparison.NEQ;
+                                            break;
+                                        case "lteq":
+                                            seedComparisons[k] = Comparison.LTEQ;
+                                            break;
+                                        case "gteq":
+                                            seedComparisons[k] = Comparison.GTEQ;
+                                            break;
+                                        default:
+                                            System.out.println("Taking EQ on default, as the given comparator " + split[k] + " could not be found.");
+                                            seedComparisons[k] = Comparison.EQ;
+                                    }
+                                    seedValues[k] = split[k * 3 + 2];
+                                }
+                                break;
                             case "refinement-operator":
                                 switch (value.toLowerCase()) {
                                     case "sro": REFINEMENT_OPERATOR = new SimpleRefinementOperator();
@@ -141,7 +174,7 @@ public class Core {
             blacklist.addAll(Arrays.asList(Core.blacklist));
 
             //Load the data from the given data file.
-            Dataset dataset = Dataset.loadARFF(filePath, yTarget, xTargets, countNullAsZero, blacklist);
+            Dataset dataset = Dataset.loadARFF(filePath, yTarget, xTargets, seedAttributes, seedComparisons, seedValues, countNullAsZero, blacklist);
             System.out.println("Number of instances: " + dataset.getInstances().size());
 
             int uniqueValues = 0;
@@ -252,6 +285,9 @@ public class Core {
         yTarget = "like";
         xTargets = new String[]{"attractive_partner","sincere_partner","intelligence_partner","funny_partner","ambition_partner","shared_interests_partner"};
         outputFilePath = "";
+        seedAttributes = new String[]{};
+        seedComparisons = new Comparison[]{};
+        seedValues = new String[]{};
     }
 
     /**
@@ -266,6 +302,8 @@ public class Core {
         System.out.println("\t-y-target value: The y target of the regression model. (MANDATORY)");
         System.out.println();
         System.out.println("\t-x-targets value1,value2,...: The x targets of the regression model. (MANDATORY)");
+        System.out.println();
+        System.out.println("\t-seed-group attribute,comparison,value,attribute2,comparison2,value2,etc: The attribute with the cutoff values have to be inserted in trios. Here the comparison has to be one of the following: {EQ,NEQ,LTEQ,GTEQ}.");
         System.out.println();
         System.out.println("\t-null-is-zero: Consider numeric null values to have a value of 0. On default, null values are left out of the evaluation.");
         System.out.println();
