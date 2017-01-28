@@ -108,7 +108,7 @@ public class BeamSearch {
             //System.out.println(Util.getCurrentTimeStamp() + " Evaluating seed " + group);
 
             //Get the quality.
-            double quality = group.evaluateQuality(dataset, seedIndices, minimumCoverage, maximumCoverage, seedIndices.size());
+            double quality = group.evaluateQuality(dataset, seedIndices, minimumCoverage, maximumCoverage, seedIndices == null ? dataset.getInstances().size(): seedIndices.size());
 
             //If the group satisfies all constraints.
             if(quality > minimumQuality) {

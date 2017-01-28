@@ -10,7 +10,7 @@ public class VirtualRunner {
 
         String[] arguments = new String[]{
                 "-d", "3",
-                "-w", "20",
+                "-w", "10",
                 "-set-length", "20",
                 "-y-target", "like",
                 "-x-targets", "attractive_partner,sincere_partner,intelligence_partner,funny_partner,ambition_partner,shared_interests_partner",
@@ -18,7 +18,6 @@ public class VirtualRunner {
                 "-blacklist", "decision,decision_o",
                 "-min-group-size", "200",
                 "-output-file", "result_1.csv",
-                "-seed-group", "d_like,EQ,[9-10],d_attractive_partner,NEQ,[9-10]"
         };
 
         Core.main(arguments);
