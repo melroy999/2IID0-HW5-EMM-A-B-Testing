@@ -171,7 +171,7 @@ public class Group implements Comparable<Group> {
      * @param dataset The dataset to take the data from.
      * @return The evaluation value according to the quality measure.
      */
-    public double evaluateQuality(Dataset dataset, Set<Integer> seedIndices, double minimumCoverage, double maximumCoverage) {
+    public double evaluateQuality(Dataset dataset, Set<Integer> seedIndices, double minimumCoverage, double maximumCoverage, int previousCoverage) {
         //Last addition:
         Constraint newConstraint = constraints.peekLast();
 
@@ -196,7 +196,7 @@ public class Group implements Comparable<Group> {
         coverage = indices.size();
 
         //We want to skip empty sets, as this gives errors. As an optimization, we now check here for minimum size and maximum size, instead of in the constraints clause.
-        if(coverage < minimumCoverage || coverage > maximumCoverage) {
+        if(coverage < minimumCoverage || coverage > maximumCoverage || previousCoverage == coverage) {
             return -Double.MAX_VALUE;
         }
 

@@ -9,7 +9,7 @@ public class VirtualRunner {
     public static void main(String[] args) {
 
         String[] arguments = new String[]{
-                "-d", "1",
+                "-d", "3",
                 "-w", "20",
                 "-set-length", "20",
                 "-y-target", "like",
