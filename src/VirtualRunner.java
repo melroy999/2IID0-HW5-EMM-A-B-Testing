@@ -9,15 +9,20 @@ public class VirtualRunner {
     public static void main(String[] args) {
 
         String[] arguments = new String[]{
-                "-d", "3",
+                "-d", "1",
                 "-w", "10",
                 "-set-length", "20",
                 "-y-target", "like",
-                "-x-targets", "attractive_partner,sincere_partner,intelligence_partner,funny_partner,ambition_partner,shared_interests_partner",
-                "-dataset-file", "data/speed_dating_altered.arff",
-                "-blacklist", "decision,decision_o",
+                "-x-targets", "importance_same_race,importance_same_religion,attractive_partner,sincere_partner,intelligence_partner,funny_partner,ambition_partner,shared_interests_partner",
+                //"-x-targets", "attractive_partner,sincere_partner,intelligence_partner,funny_partner,ambition_partner,shared_interests_partner",
+                //"-x-targets", "importance_same_race,importance_same_religion",
+                "-dataset-file", "data/speed_dating_altered_3.arff",
+                //"-dataset-file", "data/speed_dating_altered.arff",
+                //"-dataset-file", "data/speed_dating_altered_2.arff",
+                "-blacklist", "decision,decision_o,d_like,d_attractive_partner,d_sincere_partner,d_intelligence_partner,d_funny_partner,d_ambition_partner,d_shared_interests_partner",
                 "-min-group-size", "200",
                 "-output-file", "result_1.csv",
+                "-refinement-operator","SRO"
         };
 
         Core.main(arguments);

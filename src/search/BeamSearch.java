@@ -4,6 +4,7 @@ import arff.Dataset;
 import arff.attribute.AbstractAttribute;
 import group.Group;
 import search.refinement.AbstractRefinementOperator;
+import search.refinement.SimpleRefinementOperator;
 import util.GroupPriorityQueue;
 
 import java.math.BigInteger;
@@ -44,8 +45,10 @@ public class BeamSearch {
      */
     public GroupPriorityQueue search(Dataset dataset, AbstractRefinementOperator refinementOperator, int w, int d, int resultSetSize) throws InterruptedException {
         //Initialize all the attributes.
-        for(AbstractAttribute attribute : dataset.getAttributes()) {
-            attribute.initializeConstraintEvaluations(dataset);
+        if(!(refinementOperator instanceof SimpleRefinementOperator)) {
+            for(AbstractAttribute attribute : dataset.getAttributes()) {
+                attribute.initializeConstraintEvaluations(dataset);
+            }
         }
 
         //Create a candidate queue, and add the empty seed as the first element.

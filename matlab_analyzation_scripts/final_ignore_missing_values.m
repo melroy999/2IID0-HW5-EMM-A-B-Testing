@@ -8,7 +8,8 @@ output_file_name = 'speed_dating_missing_removed.csv';
 
 %Id of the x target columns.
 %The indices of the attributes that should be considered the x-targets of the regression model, where the attribute with index 1 is the first attribute in the dataset.
-x_targets = [62, 63, 64, 65, 66, 67]; 
+%x_targets = [62, 63, 64, 65, 66, 67]; 
+x_targets = [11, 12, 62, 63, 64, 65, 66, 67]; 
 
 %Id of the y target column.
 %The index of the attribute that should be considered the y-target of the regression model, where the attribute with index 1 is the first attribute in the dataset.
