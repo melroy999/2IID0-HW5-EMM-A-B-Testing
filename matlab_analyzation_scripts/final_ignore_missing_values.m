@@ -4,16 +4,17 @@
 input_file_name = 'speed_dating.csv'; 
 
 %The name of the output CSV file, which is the file in which all missing values have been processed.
-output_file_name = 'speed_dating_missing_removed.csv'; 
+output_file_name = 'speed_dating_altered_important.csv'; 
 
 %Id of the x target columns.
 %The indices of the attributes that should be considered the x-targets of the regression model, where the attribute with index 1 is the first attribute in the dataset.
 %x_targets = [62, 63, 64, 65, 66, 67]; 
-x_targets = [11, 12, 62, 63, 64, 65, 66, 67]; 
+x_targets = [40, 41, 42, 43, 44, 45]; 
 
 %Id of the y target column.
 %The index of the attribute that should be considered the y-target of the regression model, where the attribute with index 1 is the first attribute in the dataset.
 y_target = 116; 
+%y_target = 117; 
 
 % ====== End of variables that can be altered.
 
