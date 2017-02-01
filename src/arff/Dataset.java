@@ -103,6 +103,8 @@ public class Dataset {
         List<Integer> indices = new ArrayList<>(n);
         IntStream.range(0,n).forEach(indices::add);
 
+        //Calculate data for the full dataset, to be used during the Cook's distance evaluations.
+        //This includes the X_T, X_T_X, Y, beta_estimator, the difference e and the p_s_2 divisor in the Cook's distance.
         Matrix X = getXMatrix(indices);
         X_T = X.getTransposeMatrix();
         X_T_X = X_T.multiply(X);
@@ -311,6 +313,7 @@ public class Dataset {
         //Convert the indices set to a list.
         indices_list = new ArrayList<>(indices);
 
+        //Calculate the beta estimator as mentioned in section 2 of the report.
         get_beta_estimator_X = getXMatrix(indices_list);
         get_beta_estimator_X_T = get_beta_estimator_X.getTransposeMatrix();
 
